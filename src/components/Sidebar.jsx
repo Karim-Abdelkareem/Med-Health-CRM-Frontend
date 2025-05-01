@@ -6,10 +6,15 @@ import {
   FiSettings,
   FiUser,
   FiChevronDown,
+  FiCalendar,
 } from "react-icons/fi";
+import { MdOutlineEditCalendar } from "react-icons/md";
 import { Link } from "react-router";
+import { useAuth } from "../context/AuthContext";
 
 export default function Sidebar() {
+  const { user } = useAuth();
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [bgColor, setBgColor] = useState("#000000");
@@ -45,24 +50,24 @@ export default function Sidebar() {
 
   return (
     <div
-      className={`bg-gray-100 h-full shadow-lg flex flex-col border-r border-gray-200 justify-between bg-gray-1 text-black transition-all duration-300 ${
+      className={`bg-gray-100 h-full shadow-lg flex flex-col border-r border-gray-200 justify-between text-black transition-[width] duration-300 overflow-hidden ${
         isSidebarOpen ? "w-64" : "w-16"
       }`}
     >
-      <div className="p-4" ref={dropdownRef}>
+      <div className="pt-4" ref={dropdownRef}>
         {/* App logo and user dropdown */}
         <button
           onClick={toggleUserDropdown}
-          className="flex justify-between w-full items-center hover:bg-gray-200 rounded duration-200 transition-all"
+          className={`flex justify-between w-full items-center hover:bg-gray-200 rounded duration-200 transition-all`}
         >
-          <div className="m-auto py-3 flex justify-between items-center w-full">
+          <div className="m-auto p-4 flex justify-between items-center w-full">
             <div
               className={`h-8 w-8  ${
                 isSidebarOpen && "mr-4"
               } rounded-full flex items-center justify-center text-white font-bold`}
               style={{ backgroundColor: bgColor }}
             >
-              A
+              {user?.name.charAt(0).toUpperCase()}
             </div>
             {isSidebarOpen && (
               <>
@@ -72,9 +77,12 @@ export default function Sidebar() {
                       Med-Health CRM
                     </div>
                   )}
-                  <div className="flex items-center">
+                  <div className="flex flex-col items-start">
                     <span className="ml-2 text-xs text-gray-600 font-medium">
-                      John Doe
+                      {user?.name}
+                    </span>
+                    <span className="ml-2  text-xs text-gray-600 font-medium">
+                      {user?.role}
                     </span>
                   </div>
                 </div>
@@ -106,40 +114,89 @@ export default function Sidebar() {
         <nav className="mt-6">
           <ul>
             <li className="mb-2">
-              <a
-                href="#"
-                className="flex items-center p-2 hover:bg-gray-200 rounded duration-200 transition-all"
+              <Link
+                to={"/"}
+                className={`flex ${
+                  isSidebarOpen ? "justify-start" : "justify-center"
+                } items-center px-2 py-4 hover:bg-gray-200 rounded duration-200 transition-all`}
               >
-                <FiHome className="text-sm" />
-                {isSidebarOpen && <span className="ml-2">Dashboard</span>}
-              </a>
+                <FiHome size={isSidebarOpen ? 20 : 24} className="text-sm" />
+                {isSidebarOpen && (
+                  <span
+                    className={`ml-2 whitespace-nowrap overflow-hidden transition-all duration-300 ${
+                      isSidebarOpen
+                        ? "opacity-100 max-w-xs"
+                        : "opacity-0 max-w-0"
+                    }`}
+                  >
+                    Dashboard
+                  </span>
+                )}
+              </Link>
             </li>
             <li className="mb-2">
-              <a
-                href="#"
-                className="flex items-center p-2 hover:bg-gray-200 rounded"
+              <Link
+                to={"/create-plans"}
+                className={`flex ${
+                  isSidebarOpen ? "justify-start" : "justify-center"
+                } items-center px-2 py-4 hover:bg-gray-200 rounded duration-200 transition-all`}
               >
-                <FiSettings className="text-sm" />
+                <MdOutlineEditCalendar
+                  size={isSidebarOpen ? 20 : 24}
+                  className="text-sm"
+                />
+                {isSidebarOpen && <span className="ml-2">Create Plans</span>}
+              </Link>
+            </li>
+            <li className="mb-2">
+              <Link
+                to={"/my-plans"}
+                className={`flex ${
+                  isSidebarOpen ? "justify-start" : "justify-center"
+                } items-center px-2 py-4 hover:bg-gray-200 rounded duration-200 transition-all`}
+              >
+                <FiCalendar
+                  size={isSidebarOpen ? 20 : 24}
+                  className="text-sm"
+                />
+                {isSidebarOpen && <span className="ml-2">My Plans</span>}
+              </Link>
+            </li>
+            <li className="mb-2">
+              <Link
+                to={"/settings"}
+                className={`flex ${
+                  isSidebarOpen ? "justify-start" : "justify-center"
+                } items-center px-2 py-4 hover:bg-gray-200 rounded duration-200 transition-all`}
+              >
+                <FiSettings
+                  size={isSidebarOpen ? 20 : 24}
+                  className="text-sm"
+                />
                 {isSidebarOpen && <span className="ml-2">Settings</span>}
-              </a>
+              </Link>
             </li>
             <li className="mb-2">
-              <a
-                href="#"
-                className="flex items-center p-2 hover:bg-gray-200 rounded"
+              <Link
+                to={"/profile"}
+                className={`flex ${
+                  isSidebarOpen ? "justify-start" : "justify-center"
+                } items-center px-2 py-4 hover:bg-gray-200 rounded duration-200 transition-all`}
               >
-                <FiUser className="text-sm" />
+                <FiUser size={isSidebarOpen ? 20 : 24} className="text-sm" />
                 {isSidebarOpen && <span className="ml-2">Profile</span>}
-              </a>
+              </Link>
             </li>
           </ul>
         </nav>
       </div>
 
-      <div className="p-4 mt-auto">
+      <div className="mt-auto">
         <button
           onClick={toggleSidebar}
-          className="w-full flex justify-start items-center p-2 text-base text-gray-800 hover:text-gray-900 font-semibold hover:bg-gray-200 rounded"
+          className={`w-full flex ${
+            isSidebarOpen ? "justify-start" : "justify-center"
+          } items-center p-4 text-base text-gray-800 hover:text-gray-900 font-semibold hover:bg-gray-200 rounded`}
         >
           {isSidebarOpen ? <FiChevronLeft /> : <FiChevronRight />}
           {isSidebarOpen && <span className="ml-1 text-sm">Collapse</span>}

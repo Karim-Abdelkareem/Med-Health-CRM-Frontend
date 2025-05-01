@@ -1,29 +1,30 @@
 import React from "react";
 import { useForm } from "react-hook-form";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Login() {
+  const { login } = useAuth();
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm();
-  const onSubmit = (data) => console.log(data);
+  const onSubmit = (data) => login(data);
   return (
     <div className="w-full max-w-md mx-auto px-4 sm:px-6">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="relative">
           <input
             className="bg-gray-200 rounded w-full text-gray-700 focus:outline-none border-b-4 border-gray-300 focus:border-blue-500 transition duration-500 px-3 pb-2 pt-6 peer"
-            {...register("username", { required: true })}
+            {...register("email", { required: true })}
             placeholder=" "
-            id="username"
+            id="email"
           />
           <label
-            htmlFor="username"
+            htmlFor="email"
             className="absolute left-3 top-4 text-gray-600 transition-all pointer-events-none peer-focus:text-xs peer-focus:top-2 peer-[&:not(:placeholder-shown)]:text-xs peer-[&:not(:placeholder-shown)]:top-2"
           >
-            Username <span className="text-red-500">*</span>
+            Email <span className="text-red-500">*</span>
           </label>
           {errors.username && (
             <span className="text-red-500 text-sm">This field is required</span>
