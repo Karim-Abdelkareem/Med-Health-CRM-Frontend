@@ -7,6 +7,8 @@ import Dashboard from "../pages/Dashboard";
 import CreatePlan from "../pages/Plan/CreatePlan";
 import ProtectedRoute from "../components/ProtectedRoute";
 import MyPlans from "../pages/Plan/MyPlans";
+import UsersPlan from "../pages/UsersPlan/UsersPlan";
+import Location from "../pages/Location/Loaction";
 
 export default function AppRoutes() {
   return (
@@ -24,6 +26,8 @@ export default function AppRoutes() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/create-plans" element={<CreatePlan />} />
         <Route path="/my-plans" element={<MyPlans />} />
+        <Route path="/users-plans" element={<UsersPlan />} />
+        <Route path="add-location" element={<Location />} />
       </Route>
       <Route path="*" element={<div>Not Found</div>} />
     </Routes>

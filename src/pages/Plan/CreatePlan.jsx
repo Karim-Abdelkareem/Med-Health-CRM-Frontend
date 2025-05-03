@@ -9,6 +9,8 @@ import { FiEdit } from "react-icons/fi";
 import DeleteModal from "../../components/DeleteModal";
 import EditPlanModal from "../../components/EditPlanModal";
 import toast from "react-hot-toast";
+import ViewPlanModal from "../../components/ViewPlanModal";
+import PlanCard from "../../components/PlanCard";
 
 export default function CreatePlan() {
   const [selectedPlan, setSelectedPlan] = useState("daily");
@@ -17,6 +19,7 @@ export default function CreatePlan() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedPlanData, setSelectedPlanData] = useState(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
   const plans = [
     { label: "Daily Plan", value: "daily" },
@@ -85,17 +88,12 @@ export default function CreatePlan() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mx-2">
         {plans.map((plan) => (
-          <div
+          <PlanCard
             key={plan.value}
+            plan={plan}
+            isSelected={selectedPlan === plan.value}
             onClick={() => setSelectedPlan(plan.value)}
-            className={`cursor-pointer p-6 rounded-2xl shadow-md border transition-all duration-300 ${
-              selectedPlan === plan.value
-                ? "bg-blue-100 border-blue-500 text-blue-800"
-                : "bg-gray-50 hover:bg-gray-100 border-gray-200"
-            }`}
-          >
-            <h2 className="text-lg font-semibold text-center">{plan.label}</h2>
-          </div>
+          />
         ))}
       </div>
 
@@ -130,7 +128,12 @@ export default function CreatePlan() {
                     <FaEye
                       size={26}
                       className="text-gray-600 hover:text-gray-700 cursor-pointer"
+                      onClick={() => {
+                        setSelectedPlanData(plan);
+                        setIsViewModalOpen(true);
+                      }}
                     />
+
                     <FiEdit
                       size={24}
                       className="text-blue-600 hover:text-blue-700 cursor-pointer"
@@ -223,6 +226,12 @@ export default function CreatePlan() {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         onUpdate={updatePlan}
+        plan={selectedPlanData}
+      />
+      {/* View Plan Modal */}
+      <ViewPlanModal
+        isOpen={isViewModalOpen}
+        setIsOpen={setIsViewModalOpen}
         plan={selectedPlanData}
       />
     </div>

@@ -7,10 +7,12 @@ import {
   FiUser,
   FiChevronDown,
   FiCalendar,
+  FiBell,
 } from "react-icons/fi";
-import { MdOutlineEditCalendar } from "react-icons/md";
-import { Link } from "react-router";
+import { MdOutlineAddLocationAlt, MdOutlineEditCalendar } from "react-icons/md";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { BsListTask } from "react-icons/bs";
 
 export default function Sidebar() {
   const { user } = useAuth();
@@ -48,6 +50,128 @@ export default function Sidebar() {
     };
   }, []);
 
+  const role = user?.role;
+  const [routes, setRoutes] = useState([]);
+
+  useEffect(() => {
+    switch (role) {
+      case "GM":
+        setRoutes(GMRoutes);
+        break;
+      case "R":
+        setRoutes(RepresentativeRoutes);
+        break;
+      case "HR":
+        setRoutes(HRRoutes);
+        break;
+      default:
+        break;
+    }
+  }, [role]);
+
+  const RepresentativeRoutes = [
+    {
+      path: "/",
+      name: "Dashboard",
+      icon: <FiHome />,
+    },
+    {
+      path: "/create-plans",
+      name: "Create Plan",
+      icon: <MdOutlineEditCalendar />,
+    },
+    {
+      path: "/my-plans",
+      name: "My Plans",
+      icon: <FiCalendar />,
+    },
+    {
+      path: "/settings",
+      name: "Settings",
+      icon: <FiSettings />,
+    },
+    {
+      path: "/profile",
+      name: "Profile",
+      icon: <FiUser />,
+    },
+  ];
+
+  const GMRoutes = [
+    {
+      path: "/",
+      name: "Dashboard",
+      icon: <FiHome />,
+    },
+    {
+      path: "/create-plans",
+      name: "Create Plan",
+      icon: <MdOutlineEditCalendar />,
+    },
+    {
+      path: "/my-plans",
+      name: "My Plans",
+      icon: <FiCalendar />,
+    },
+    {
+      path: "/users-plans",
+      name: "Users Plans",
+      icon: <BsListTask />,
+    },
+    {
+      path: "/settings",
+      name: "Settings",
+      icon: <FiSettings />,
+    },
+    {
+      path: "/profile",
+      name: "Profile",
+      icon: <FiUser />,
+    },
+  ];
+
+  const HRRoutes = [
+    {
+      path: "/",
+      name: "Dashboard",
+      icon: <FiHome />,
+    },
+    {
+      path: "/create-plans",
+      name: "Create Plan",
+      icon: <MdOutlineEditCalendar />,
+    },
+    {
+      path: "/my-plans",
+      name: "My Plans",
+      icon: <FiCalendar />,
+    },
+    {
+      path: "/add-location",
+      name: "Location",
+      icon: <MdOutlineAddLocationAlt />,
+    },
+    {
+      path: "/users-plans",
+      name: "Users Plans",
+      icon: <BsListTask />,
+    },
+    {
+      path: "/settings",
+      name: "Settings",
+      icon: <FiSettings />,
+    },
+    {
+      path: "/profile",
+      name: "Profile",
+      icon: <FiUser />,
+    },
+    {
+      path: "/notifications",
+      name: "Notifications",
+      icon: <FiBell />,
+    },
+  ];
   return (
     <div
       className={`bg-gray-100 h-full shadow-lg flex flex-col border-r border-gray-200 justify-between text-black transition-[width] duration-300 overflow-hidden ${
@@ -113,80 +237,22 @@ export default function Sidebar() {
         {/* Sidebar navigation */}
         <nav className="mt-6">
           <ul>
-            <li className="mb-2">
-              <Link
-                to={"/"}
-                className={`flex ${
-                  isSidebarOpen ? "justify-start" : "justify-center"
-                } items-center px-2 py-4 hover:bg-gray-200 rounded duration-200 transition-all`}
-              >
-                <FiHome size={isSidebarOpen ? 20 : 24} className="text-sm" />
-                {isSidebarOpen && (
-                  <span
-                    className={`ml-2 whitespace-nowrap overflow-hidden transition-all duration-300 ${
-                      isSidebarOpen
-                        ? "opacity-100 max-w-xs"
-                        : "opacity-0 max-w-0"
-                    }`}
-                  >
-                    Dashboard
-                  </span>
-                )}
-              </Link>
-            </li>
-            <li className="mb-2">
-              <Link
-                to={"/create-plans"}
-                className={`flex ${
-                  isSidebarOpen ? "justify-start" : "justify-center"
-                } items-center px-2 py-4 hover:bg-gray-200 rounded duration-200 transition-all`}
-              >
-                <MdOutlineEditCalendar
-                  size={isSidebarOpen ? 20 : 24}
-                  className="text-sm"
-                />
-                {isSidebarOpen && <span className="ml-2">Create Plans</span>}
-              </Link>
-            </li>
-            <li className="mb-2">
-              <Link
-                to={"/my-plans"}
-                className={`flex ${
-                  isSidebarOpen ? "justify-start" : "justify-center"
-                } items-center px-2 py-4 hover:bg-gray-200 rounded duration-200 transition-all`}
-              >
-                <FiCalendar
-                  size={isSidebarOpen ? 20 : 24}
-                  className="text-sm"
-                />
-                {isSidebarOpen && <span className="ml-2">My Plans</span>}
-              </Link>
-            </li>
-            <li className="mb-2">
-              <Link
-                to={"/settings"}
-                className={`flex ${
-                  isSidebarOpen ? "justify-start" : "justify-center"
-                } items-center px-2 py-4 hover:bg-gray-200 rounded duration-200 transition-all`}
-              >
-                <FiSettings
-                  size={isSidebarOpen ? 20 : 24}
-                  className="text-sm"
-                />
-                {isSidebarOpen && <span className="ml-2">Settings</span>}
-              </Link>
-            </li>
-            <li className="mb-2">
-              <Link
-                to={"/profile"}
-                className={`flex ${
-                  isSidebarOpen ? "justify-start" : "justify-center"
-                } items-center px-2 py-4 hover:bg-gray-200 rounded duration-200 transition-all`}
-              >
-                <FiUser size={isSidebarOpen ? 20 : 24} className="text-sm" />
-                {isSidebarOpen && <span className="ml-2">Profile</span>}
-              </Link>
-            </li>
+            {routes.map((route) => (
+              <li key={route.path} className="mb-2">
+                <Link
+                  to={route.path}
+                  className={`flex ${
+                    isSidebarOpen ? "justify-start" : "justify-center"
+                  } items-center px-2 py-4 hover:bg-gray-200 rounded duration-200 transition-all`}
+                >
+                  {React.cloneElement(route.icon, {
+                    size: isSidebarOpen ? 20 : 24,
+                    className: "text-sm",
+                  })}
+                  {isSidebarOpen && <span className="ml-2">{route.name}</span>}
+                </Link>
+              </li>
+            ))}
           </ul>
         </nav>
       </div>

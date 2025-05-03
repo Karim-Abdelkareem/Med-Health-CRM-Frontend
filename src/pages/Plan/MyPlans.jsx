@@ -7,6 +7,8 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import Switch from "react-switch";
 
 import L from "leaflet";
+import toast from "react-hot-toast";
+import PlanCard from "../../components/PlanCard";
 
 export default function MyPlans() {
   const [plansData, setplansData] = useState([]);
@@ -16,6 +18,31 @@ export default function MyPlans() {
     { label: "Weekly Plan", value: "weekly" },
     { label: "Monthly Plan", value: "monthly" },
   ];
+
+  const [location, setLocation] = useState({
+    visitedLatitude: null,
+    visitedLongitude: null,
+  });
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            visitedLatitude: position.coords.latitude,
+            visitedLongitude: position.coords.longitude,
+          });
+        },
+        (err) => {
+          setError(err.message);
+          toast.error(error);
+        }
+      );
+    } else {
+      setError("Geolocation is not supported by this browser.");
+    }
+  }, []);
 
   const fetchPlans = async () => {
     try {
@@ -30,11 +57,39 @@ export default function MyPlans() {
     fetchPlans();
   }, [selectedPlan]);
 
+  const getMonthlyPlans = async () => {
+    try {
+      const response = await planService.getMonthlyPlans();
+      setplansData(response);
+    } catch (err) {
+      console.error("Error fetching plans:", err);
+    }
+  };
+
+  useEffect(() => {
+    getMonthlyPlans();
+  }, []);
+
   const [selectedPlanId, setSelectedPlanId] = useState(null);
   const [selectedRegionId, setSelectedRegionId] = useState(null);
   const updateToVisited = async () => {
     try {
-      await planService.updateToVisited(selectedPlanId, selectedRegionId);
+      await planService.updateToVisited(
+        selectedPlanId,
+        selectedRegionId,
+        location
+      );
+      toast.success("Plan updated successfully");
+      fetchPlans();
+    } catch (err) {
+      console.error("Error updating plan:", err);
+    }
+  };
+
+  const cancelVisit = async () => {
+    try {
+      await planService.unVisitRegion(selectedPlanId, selectedRegionId);
+      toast.success("Plan updated successfully");
       fetchPlans();
     } catch (err) {
       console.error("Error updating plan:", err);
@@ -48,17 +103,12 @@ export default function MyPlans() {
       {/* Plan selection grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mx-2">
         {plans.map((plan) => (
-          <div
+          <PlanCard
             key={plan.value}
+            plan={plan}
+            isSelected={selectedPlan === plan.value}
             onClick={() => setSelectedPlan(plan.value)}
-            className={`cursor-pointer p-6 rounded-2xl shadow-md border transition-all duration-300 ${
-              selectedPlan === plan.value
-                ? "bg-blue-100 border-blue-500 text-blue-800"
-                : "bg-gray-50 hover:bg-gray-100 border-gray-200"
-            }`}
-          >
-            <h2 className="text-lg font-semibold text-center">{plan.label}</h2>
-          </div>
+          />
         ))}
       </div>
 
@@ -95,11 +145,8 @@ export default function MyPlans() {
                 </div>
                 <div>
                   {plan.region.map((region, index) => (
-                    <>
-                      <div
-                        key={index}
-                        className="flex flex-col items-start gap-2 mb-2"
-                      >
+                    <div key={index}>
+                      <div className="flex flex-col items-start gap-2 mb-2">
                         <div className="flex items-start gap-2 mb-2">
                           <IoLocationSharp size={20} />
                           <div>
@@ -125,11 +172,11 @@ export default function MyPlans() {
 
                         {/* Small map for the region */}
                         {region.latitude && region.longitude && (
-                          <div className="mt-4 w-[85%] h-96 rounded-2xl overflow-hidden">
+                          <div className="mt-4 w-[100%] lg:w-[50%] h-96 rounded-2xl overflow-hidden">
                             <MapContainer
                               center={[region.latitude, region.longitude]}
                               zoom={20}
-                              scrollWheelZoom={true}
+                              scrollWheelZoom={false}
                               style={{ height: "100%", width: "100%" }}
                             >
                               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -142,29 +189,69 @@ export default function MyPlans() {
                           </div>
                         )}
                       </div>
-                      <div className="flex flex-col pt-4 space-y-2 justify-start">
-                        <p className="text-gray-600 text-xl font-bold">
-                          Visit Status
-                        </p>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={
-                              region.status?.toLowerCase() === "completed"
+                      <div className="flex flex-col gap-6 border-t ">
+                        <div className="flex flex-col pt-2 justify-between">
+                          <p className="text-gray-600 text-xl my-2 font-bold">
+                            Visit Complete
+                          </p>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              disabled={
+                                region.status?.toLowerCase() === "completed"
+                              }
+                              checked={
+                                region.status?.toLowerCase() === "completed"
+                              }
+                              className="sr-only peer"
+                              onChange={() => {
+                                setSelectedPlanId(plan._id);
+                                setSelectedRegionId(region._id);
+                                updateToVisited();
+                              }}
+                            />
+                            <div
+                              className="
+      w-11 h-6 bg-gray-500 rounded-full relative
+      after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+      after:bg-white after:border-gray-300 after:border after:rounded-full
+      after:h-5 after:w-5 after:transition-all
+
+      peer-checked:bg-green-300
+      peer-checked:after:translate-x-full
+      peer-checked:after:border-white
+
+      peer-disabled:opacity-50
+      peer-disabled:cursor-not-allowed
+    "
+                            ></div>
+                          </label>
+                        </div>
+                        <div className="flex flex-col pt-2  justify-between">
+                          <p className="text-gray-600 text-xl font-bold">
+                            Cancel Visit
+                          </p>
+                          <button
+                            disabled={
+                              region.status?.toLowerCase() !== "completed"
                             }
-                            className="sr-only peer"
-                            onChange={() => {
+                            onClick={() => {
                               setSelectedPlanId(plan._id);
                               setSelectedRegionId(region._id);
-                              updateToVisited();
+                              cancelVisit();
                             }}
-                          />
-
-                          <div className="w-11 h-6 bg-gray-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                        </label>
+                            className={`${
+                              region.status?.toLowerCase() !== "completed"
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                            } bg-red-600 hover:bg-red-700 text-white w-fit my-2 px-4 py-2 rounded`}
+                          >
+                            Cancel Visit
+                          </button>
+                        </div>
                       </div>
                       <hr className="border-gray-200 my-8" />
-                    </>
+                    </div>
                   ))}
                 </div>
                 <div className="border border-gray-200 rounded bg-gray-100 p-4">

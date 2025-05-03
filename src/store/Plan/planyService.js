@@ -64,15 +64,43 @@ const planService = {
     const response = await axios.put(
       `${API_URL}/complete/${id}/${region}`,
       {
-        data,
+        visitedLatitude: data.visitedLatitude,
+        visitedLongitude: data.visitedLongitude,
       },
       {
         headers: {
-          Authorization: `Beerar  ${token}`,
+          Authorization: `Beerar ${token}`,
         },
       }
     );
     return response;
+  },
+
+  unVisitRegion: async (id, region) => {
+    const token = getAuthToken();
+    const response = await axios.put(
+      `${API_URL}/unvisit/${id}/${region}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response;
+  },
+
+  getMonthlyPlans: async (startDate, endDate, userId) => {
+    const token = getAuthToken();
+    const response = await axios.get(
+      `${API_URL}/monthly?startDate=${startDate}&endDate=${endDate}&userId=${userId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
   },
 
   filterPlans: async (query) => {
