@@ -114,134 +114,18 @@ export default function MonthlyPlan({ planData, selectedPlan }) {
 
               {/* Notes */}
               <div className="space-y-6">
-                {planData.plans[selectedDayIndex].notes ? (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                      <CgNotes size={20} />
-                      Notes
-                    </h3>
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <p className="text-gray-700 whitespace-pre-line">
-                        {planData.plans[selectedDayIndex].notes}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                      <CgNotes size={20} />
-                      Notes
-                    </h3>
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <p className="text-gray-700 whitespace-pre-line">
-                        No notes added
-                      </p>
-                    </div>
-                  </div>
+                {/* Notes */}
+                {renderNoteSection(
+                  "Notes",
+                  planData.plans[selectedDayIndex].notes
                 )}
-                {/* GM Notes */}
-                {planData.plans[selectedDayIndex].gmNotes.length > 0 ? (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                      <CgNotes size={20} />
-                      GM Notes
-                    </h3>
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <p className="text-gray-700 whitespace-pre-line italic">
-                        {planData.plans[selectedDayIndex].gmNotes}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                      <CgNotes size={20} />
-                      GM Notes
-                    </h3>
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <p className="text-gray-700 whitespace-pre-line italic">
-                        No notes added
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {/* DM Notes */}
-                {planData.plans[selectedDayIndex].dmNotes.length > 0 ? (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                      <CgNotes size={20} />
-                      DM Notes
-                    </h3>
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <p className="text-gray-700 whitespace-pre-line italic">
-                        {planData.plans[selectedDayIndex].dmNotes}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                      <CgNotes size={20} />
-                      DM Notes
-                    </h3>
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <p className="text-gray-700 whitespace-pre-line italic">
-                        No notes added
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {/* LM Notes  */}
-                {planData.plans[selectedDayIndex].lmNotes.length > 0 ? (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                      <CgNotes size={20} />
-                      LM Notes
-                    </h3>
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <p className="text-gray-700 whitespace-pre-line italic">
-                        {planData.plans[selectedDayIndex].lmNotes}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                      <CgNotes size={20} />
-                      LM Notes
-                    </h3>
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <p className="text-gray-700 whitespace-pre-line italic">
-                        No notes added
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {/* HR Notes */}
-                {planData.plans[selectedDayIndex].hrNotes.length > 0 ? (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                      <CgNotes size={20} />
-                      HR Notes
-                    </h3>
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <p className="text-gray-700 whitespace-pre-line italic">
-                        {planData.plans[selectedDayIndex].hrNotes}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                      <CgNotes size={20} />
-                      HR Notes
-                    </h3>
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <p className="text-gray-700 whitespace-pre-line italic">
-                        No notes added
-                      </p>
-                    </div>
-                  </div>
+
+                {/* GM, DM, LM, HR Notes */}
+                {["gmNotes", "dmNotes", "lmNotes", "hrNotes"].map((key) =>
+                  renderNoteSection(
+                    key.toUpperCase().replace("NOTES", "") + " Notes",
+                    planData.plans[selectedDayIndex][key]
+                  )
                 )}
               </div>
             </div>
@@ -257,3 +141,31 @@ export default function MonthlyPlan({ planData, selectedPlan }) {
     </div>
   );
 }
+
+const renderNoteSection = (title, notes) => (
+  <div>
+    <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+      <CgNotes size={20} />
+      {title}
+    </h3>
+    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+      {Array.isArray(notes) ? (
+        notes.length > 0 ? (
+          notes.map((note, idx) => (
+            <p key={idx} className="text-gray-700 whitespace-pre-line italic">
+              {note}
+            </p>
+          ))
+        ) : (
+          <p className="text-gray-700 whitespace-pre-line italic">
+            No notes added
+          </p>
+        )
+      ) : notes ? (
+        <p className="text-gray-700 whitespace-pre-line">{notes}</p>
+      ) : (
+        <p className="text-gray-700 whitespace-pre-line">No notes added</p>
+      )}
+    </div>
+  </div>
+);

@@ -123,134 +123,48 @@ export default function DaliyPlan({
                   </div>
 
                   <div className="space-y-6">
-                    {planToShow.notes ? (
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                          <CgNotes size={20} />
-                          Notes
-                        </h3>
-                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    {/* General Notes */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <CgNotes size={20} />
+                        Notes
+                      </h3>
+                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        {planToShow.notes?.length > 0 ? (
                           <p className="text-gray-700 whitespace-pre-line">
                             {planToShow.notes}
                           </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                          <CgNotes size={20} />
-                          Notes
-                        </h3>
-                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        ) : (
                           <p className="text-gray-700 whitespace-pre-line">
                             No notes added
                           </p>
-                        </div>
+                        )}
                       </div>
-                    )}
-                    {/* GM Notes */}
-                    {planToShow.gmNotes.length > 0 ? (
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                          <CgNotes size={20} />
-                          GM Notes
-                        </h3>
-                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                          <p className="text-gray-700 whitespace-pre-line italic">
-                            {planToShow.gmNotes}
-                          </p>
+                    </div>
+
+                    {/* Helper function to render note sections */}
+                    {["gmNotes", "dmNotes", "lmNotes", "hrNotes"].map(
+                      (noteType) => (
+                        <div key={noteType}>
+                          <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                            <CgNotes size={20} />
+                            {noteType.toUpperCase().replace("NOTES", "")} Notes
+                          </h3>
+                          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            {planToShow[noteType]?.length > 0 ? (
+                              <ul className="text-gray-700 whitespace-pre-line italic space-y-2">
+                                {planToShow[noteType].map((note, idx) => (
+                                  <li key={idx}>• {note}</li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="text-gray-700 whitespace-pre-line italic">
+                                No notes added
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                          <CgNotes size={20} />
-                          GM Notes
-                        </h3>
-                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                          <p className="text-gray-700 whitespace-pre-line italic">
-                            No notes added
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    {/* DM Notes */}
-                    {planToShow.dmNotes.length > 0 ? (
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                          <CgNotes size={20} />
-                          DM Notes
-                        </h3>
-                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                          <p className="text-gray-700 whitespace-pre-line italic">
-                            {planToShow.dmNotes}
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                          <CgNotes size={20} />
-                          DM Notes
-                        </h3>
-                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                          <p className="text-gray-700 whitespace-pre-line italic">
-                            No notes added
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    {/* LM Notes  */}
-                    {planToShow.lmNotes.length > 0 ? (
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                          <CgNotes size={20} />
-                          LM Notes
-                        </h3>
-                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                          <p className="text-gray-700 whitespace-pre-line italic">
-                            {planToShow.lmNotes}
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                          <CgNotes size={20} />
-                          LM Notes
-                        </h3>
-                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                          <p className="text-gray-700 whitespace-pre-line italic">
-                            No notes added
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    {/* HR Notes */}
-                    {planToShow.hrNotes.length > 0 ? (
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                          <CgNotes size={20} />
-                          HR Notes
-                        </h3>
-                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                          <p className="text-gray-700 whitespace-pre-line italic">
-                            {planToShow.hrNotes}
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                          <CgNotes size={20} />
-                          HR Notes
-                        </h3>
-                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                          <p className="text-gray-700 whitespace-pre-line italic">
-                            No notes added
-                          </p>
-                        </div>
-                      </div>
+                      )
                     )}
                   </div>
                 </div>
