@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { IoClose } from "react-icons/io5";
-import planService from "../store/Plan/planyService";
-import LocationPickerModal from "./LocationPickerModal";
+import React, { useEffect, useState } from "react";
+import { IoChevronDown, IoClose } from "react-icons/io5";
 import toast from "react-hot-toast";
+import locationService from "../store/Location/locationService";
+import monthlyService from "../store/Monthly/monthlyService";
 
 export default function PlanModal({
   planOption,
@@ -11,24 +11,30 @@ export default function PlanModal({
   setIsOpen,
   fetchPlanData,
 }) {
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [startDate, setStartDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+  const [endDate, setEndDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
   const [regions, setRegions] = useState([
     {
-      location: "",
-      longitude: "",
-      latitude: "",
+      locations: [],
       visitDate: new Date().toISOString().split("T")[0],
+      dropdownOpen: false,
     },
   ]);
   const [notes, setNotes] = useState("");
   const addRegion = () => {
     setRegions([
       ...regions,
-      { location: "", visitDate: new Date().toISOString().split("T")[0] },
+      {
+        locations: [],
+        visitDate: new Date().toISOString().split("T")[0],
+        dropdownOpen: false, // <-- Add this
+      },
     ]);
   };
-  const [isMapOpen, setIsMapOpen] = useState(false);
-  const [activeRegionIndex, setActiveRegionIndex] = useState(null);
 
   const updateRegion = (index, key, value) => {
     const updated = [...regions];
@@ -42,33 +48,49 @@ export default function PlanModal({
     setRegions(updated);
   };
 
-  const addPlan = async (planData) => {
-    await planService.createPlan(planData);
-    fetchPlanData();
-  };
+  // const addPlan = async (planData) => {
+  //   await planService.createPlan(planData);
+  //   fetchPlanData();
+  // };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const planData = {
-      type: planType,
-      date,
-      region: regions,
+      startDate,
+      endDate,
+      plans: regions,
       notes,
     };
-    addPlan(planData);
+    createPlan(planData);
+    // addPlan(planData);
     toast.success("Plan created successfully");
 
-    setIsOpen(false);
+    // setIsOpen(false);
   };
 
-  function shortenAddress(address) {
-    if (!address) return "";
-    const parts = address.split(", ");
+  const [locationOptions, setLocationOptions] = useState([]);
+  //fetch locations
+  const fetchLocations = async () => {
+    try {
+      const response = await locationService.getAllLocations();
+      if (response.status === 200) {
+        setLocationOptions(response.data.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch locations:", error);
+    }
+  };
 
-    const roadPart = parts[1] ? parts[1].replace("Road", "Rd") : "";
+  useEffect(() => {
+    fetchLocations();
+  }, []);
 
-    return `${parts[0]}, ${roadPart}, ${parts[3] || ""}, ${parts[4] || ""}`;
-  }
+  //Create plan
+  const createPlan = async (planData) => {
+    const response = await monthlyService.createMonthlyPlan(planData);
+    console.log(response);
+    fetchPlanData();
+  };
 
   return (
     <div
@@ -103,52 +125,120 @@ export default function PlanModal({
           className="space-y-4 max-h-[70vh] overflow-y-auto pr-1"
         >
           <div>
-            <label className="text-sm font-medium">Plan Date</label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full border rounded p-2 mt-1 text-sm"
-              required
-            />
+            <div className="flex items-center gap-2 mt-2">
+              <div className="flex flex-1 flex-col">
+                <label className="text-sm font-medium">Start Date</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full border rounded p-2 mt-1 text-sm"
+                  required
+                />
+              </div>
+              <div className="flex flex-1 flex-col">
+                <label className="text-sm font-medium">End Date</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full border rounded p-2 mt-1 text-sm"
+                  required
+                />
+              </div>
+            </div>
           </div>
 
           <div>
-            <label className="text-sm font-medium">Regions</label>
+            <label className="text-sm font-medium">Locations</label>
             {regions.map((region, index) => (
-              <div key={index} className="flex items-center gap-2 mt-2">
-                <input
-                  type="text"
-                  placeholder="Location"
-                  value={shortenAddress(region.location) || ""}
-                  onClick={() => {
-                    setActiveRegionIndex(index);
-                    setIsMapOpen(true);
-                  }}
-                  readOnly
-                  className="flex-1 border rounded p-2 text-sm bg-gray-100 cursor-pointer"
-                  required
-                />
-                <input
-                  type="date"
-                  value={region.visitDate}
-                  onChange={(e) =>
-                    updateRegion(index, "visitDate", e.target.value)
-                  }
-                  className="w-32 border rounded p-2 text-sm"
-                  required
-                />
-                {regions.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeRegion(index)}
-                    className="text-red-500 text-lg"
+              <div key={index} className="flex flex-col gap-2 mt-2">
+                <div className="flex items-center gap-2 flex-1">
+                  <div
+                    onClick={() =>
+                      updateRegion(index, "dropdownOpen", !region.dropdownOpen)
+                    }
+                    className="p-2 rounded border flex justify-between items-center flex-1"
                   >
-                    ×
-                  </button>
+                    <span>Locations</span>
+                    <IoChevronDown
+                      className={`${
+                        region.dropdownOpen ? "rotate-180" : ""
+                      } delay-150 duration-150`}
+                    />
+                  </div>
+
+                  <input
+                    type="date"
+                    value={region.visitDate}
+                    onChange={(e) =>
+                      updateRegion(index, "visitDate", e.target.value)
+                    }
+                    className="w-32 border rounded p-2 text-sm"
+                    required
+                  />
+                  {regions.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeRegion(index)}
+                      className="text-red-500 text-lg"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+                {region.dropdownOpen && (
+                  <div className="w-full bg-white border rounded mt-2 shadow-lg p-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                      {locationOptions.map((option) => (
+                        <label
+                          key={option._id}
+                          className="flex items-center space-x-2 p-2 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            value={option._id}
+                            checked={region.locations?.includes(option._id)}
+                            onChange={(e) => {
+                              const selected = region.locations || [];
+                              let updated;
+
+                              if (e.target.checked) {
+                                updated = [...selected, option._id];
+                              } else {
+                                updated = selected.filter(
+                                  (loc) => loc !== option._id
+                                );
+                              }
+
+                              updateRegion(index, "locations", updated);
+                            }}
+                            className="accent-blue-500"
+                          />
+                          <span>{option.locationName}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {region.locations?.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {region.locations.map((locId) => {
+                      const loc = locationOptions.find((l) => l._id === locId);
+                      return (
+                        <div
+                          key={locId}
+                          className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm border border-blue-500"
+                        >
+                          {loc?.locationName || "Unknown"}
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             ))}
+
             <button
               type="button"
               onClick={addRegion}
@@ -176,15 +266,6 @@ export default function PlanModal({
           </button>
         </form>
       </div>
-      <LocationPickerModal
-        isOpen={isMapOpen}
-        onClose={() => setIsMapOpen(false)}
-        onSelect={(coords, locationName) => {
-          updateRegion(activeRegionIndex, "latitude", coords.lat);
-          updateRegion(activeRegionIndex, "longitude", coords.lng);
-          updateRegion(activeRegionIndex, "location", locationName);
-        }}
-      />
     </div>
   );
 }

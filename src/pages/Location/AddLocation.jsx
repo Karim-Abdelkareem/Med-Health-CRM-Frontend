@@ -42,29 +42,35 @@ export default function AddLocation() {
   // Sample data for states and cities
   // In a real app, you would fetch this from an API
   const states = [
-    { value: "AL", label: "Alabama" },
-    { value: "AK", label: "Alaska" },
-    { value: "AZ", label: "Arizona" },
-    { value: "AR", label: "Arkansas" },
-    { value: "CA", label: "California" },
-    { value: "CO", label: "Colorado" },
-    { value: "CT", label: "Connecticut" },
+    { value: "Faiyum", label: "Faiyum" },
+    { value: "BaniSewif", label: "Bani Sewif" },
+    { value: "Minya", label: "Minya" },
+    { value: "Asyut", label: "Asyut" },
+    { value: "Sohag", label: "Sohag" },
+    { value: "Qena", label: "Qena" },
+    { value: "Luxor", label: "Luxor" },
+    { value: "Aswan", label: "Aswan" },
     // Add more states as needed
   ];
 
   // Cities would be dynamically loaded based on state selection
   const citiesByState = {
-    AL: [
+    Faiyum: [
       { value: "birmingham", label: "Birmingham" },
       { value: "montgomery", label: "Montgomery" },
       { value: "mobile", label: "Mobile" },
     ],
-    AK: [
+    BaniSewif: [
       { value: "anchorage", label: "Anchorage" },
       { value: "fairbanks", label: "Fairbanks" },
       { value: "juneau", label: "Juneau" },
     ],
-    AZ: [
+    Minya: [
+      { value: "phoenix", label: "Phoenix" },
+      { value: "tucson", label: "Tucson" },
+      { value: "mesa", label: "Mesa" },
+    ],
+    Sohag: [
       { value: "phoenix", label: "Phoenix" },
       { value: "tucson", label: "Tucson" },
       { value: "mesa", label: "Mesa" },

@@ -1,21 +1,21 @@
 import React from "react";
 
-export default function PlanCard({ plan, isSelected, onClick }) {
+export default function PlanCard({ plan, isSelected, disabled, onClick }) {
   return (
     <div
       onClick={onClick}
       className={`cursor-pointer p-6 rounded-xl shadow-sm border-2 transition-all duration-300 transform hover:scale-105 ${
         isSelected
-          ? "bg-blue-50 border-blue-500 text-blue-800 shadow-md"
+          ? "bg-blue-50 border-green-500 text-green-800 shadow-md"
           : "bg-gray-50 hover:bg-gray-100 border-gray-200"
-      }`}
+      } ${disabled && "opacity-50 pointer-events-none"}`}
     >
       <h2 className="text-lg font-semibold text-center">{plan.label}</h2>
 
       {isSelected && (
         <div className="flex justify-center mt-2">
           <svg
-            className="w-5 h-5 text-blue-600"
+            className="w-5 h-5 text-green-600"
             fill="currentColor"
             viewBox="0 0 20 20"
             xmlns="http://www.w3.org/2000/svg"

@@ -4,6 +4,9 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import SelectField from "../../components/SelectField";
 import InputField from "../../components/InputField";
+import locationService from "../../store/Location/locationService";
+import { set } from "react-hook-form";
+import toast from "react-hot-toast";
 
 // Leaflet icon fix
 delete L.Icon.Default.prototype._getIconUrl;
@@ -24,27 +27,6 @@ const LocationMarker = ({ position, setPosition }) => {
 };
 
 const EditLocation = () => {
-  const [allLocations] = useState([
-    {
-      id: "1",
-      name: "Main Office",
-      address: "123 Main St",
-      state: "CA",
-      city: "losangeles",
-      latitude: 34.0522,
-      longitude: -118.2437,
-    },
-    {
-      id: "2",
-      name: "Branch A",
-      address: "456 Park Ave",
-      state: "AZ",
-      city: "phoenix",
-      latitude: 33.4484,
-      longitude: -112.074,
-    },
-  ]);
-
   const [selectedId, setSelectedId] = useState("");
   const [selectedLocation, setSelectedLocation] = useState(null);
 
@@ -54,22 +36,67 @@ const EditLocation = () => {
   const [city, setCity] = useState("");
   const [position, setPosition] = useState(null);
   const [availableCities, setAvailableCities] = useState([]);
+  const [locations, setLocations] = useState([]);
+  // fetch locations
+  const fetchLocations = async () => {
+    try {
+      const response = await locationService.getAllLocations();
+      if (response.status === 200) {
+        setLocations(response.data.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch locations:", error);
+    }
+  };
 
+  useEffect(() => {
+    fetchLocations();
+  }, []);
+
+  // In a real app, you would fetch this from an API
   const states = [
-    { value: "CA", label: "California" },
-    { value: "AZ", label: "Arizona" },
+    { value: "Faiyum", label: "Faiyum" },
+    { value: "BaniSewif", label: "Bani Sewif" },
+    { value: "Minya", label: "Minya" },
+    { value: "Asyut", label: "Asyut" },
+    { value: "Sohag", label: "Sohag" },
+    { value: "Qena", label: "Qena" },
+    { value: "Luxor", label: "Luxor" },
+    { value: "Aswan", label: "Aswan" },
+    // Add more states as needed
   ];
+
+  // Cities would be dynamically loaded based on state selection
   const citiesByState = {
-    CA: [{ value: "losangeles", label: "Los Angeles" }],
-    AZ: [{ value: "phoenix", label: "Phoenix" }],
+    Faiyum: [
+      { value: "birmingham", label: "Birmingham" },
+      { value: "montgomery", label: "Montgomery" },
+      { value: "mobile", label: "Mobile" },
+    ],
+    BaniSewif: [
+      { value: "anchorage", label: "Anchorage" },
+      { value: "fairbanks", label: "Fairbanks" },
+      { value: "juneau", label: "Juneau" },
+    ],
+    Minya: [
+      { value: "phoenix", label: "Phoenix" },
+      { value: "tucson", label: "Tucson" },
+      { value: "mesa", label: "Mesa" },
+    ],
+    Sohag: [
+      { value: "phoenix", label: "Phoenix" },
+      { value: "tucson", label: "Tucson" },
+      { value: "mesa", label: "Mesa" },
+    ],
+    // Add more cities for other states
   };
 
   useEffect(() => {
     if (selectedId) {
-      const loc = allLocations.find((l) => l.id === selectedId);
+      const loc = locations.find((l) => l._id === selectedId);
       if (loc) {
         setSelectedLocation(loc);
-        setLocationName(loc.name);
+        setLocationName(loc.locationName);
         setAddress(loc.address);
         setState(loc.state);
         setCity(loc.city);
@@ -86,8 +113,7 @@ const EditLocation = () => {
     }
   }, [state]);
 
-  const handleUpdate = (e) => {
-    e.preventDefault();
+  const handleUpdate = () => {
     if (
       !selectedId ||
       !locationName ||
@@ -106,8 +132,27 @@ const EditLocation = () => {
       latitude: position[0],
       longitude: position[1],
     };
-    console.log("Updated location:", updated);
-    alert("Location updated!");
+    // update location
+    locationService.updateLocation(selectedId, updated);
+    toast.success("Location updated!");
+  };
+
+  //Delete location
+  const onDelete = async () => {
+    try {
+      await locationService.deleteLocation(selectedId);
+      toast.success("Location deleted successfully");
+      setSelectedId("");
+      setSelectedLocation(null);
+      setLocationName("");
+      setAddress("");
+      setState("");
+      setCity("");
+      setPosition(null);
+      fetchLocations();
+    } catch (err) {
+      console.error("Error deleting location:", err);
+    }
   };
 
   return (
@@ -119,19 +164,15 @@ const EditLocation = () => {
           label="Select Location"
           value={selectedId}
           onChange={(e) => setSelectedId(e.target.value)}
-          options={allLocations.map((loc) => ({
-            value: loc.id,
-            label: loc.name,
+          options={locations?.map((loc) => ({
+            value: loc._id,
+            label: loc.locationName,
           }))}
           placeholder="Choose a location"
           required
         />
-
         {selectedLocation && (
-          <form
-            onSubmit={handleUpdate}
-            className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6"
-          >
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <InputField
                 label="Location Name"
@@ -200,15 +241,21 @@ const EditLocation = () => {
               </MapContainer>
             </div>
 
-            <div className="col-span-2 flex justify-end mt-4">
+            <div className="col-span-2 gap-2 flex justify-end mt-4">
               <button
-                type="submit"
+                onClick={() => onDelete(selectedId)}
+                className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Delete Location
+              </button>
+              <button
+                onClick={() => handleUpdate()}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Update Location
               </button>
             </div>
-          </form>
+          </div>
         )}
       </div>
     </div>

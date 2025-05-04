@@ -48,7 +48,9 @@ export default function Location() {
               : "bg-gray-50 hover:bg-gray-100 border-gray-200"
           }`}
         >
-          <h2 className="text-lg font-semibold text-center">Edit Location</h2>
+          <h2 className="text-lg font-semibold text-center">
+            Edit/Delete Location
+          </h2>
           {isSelected("edit") && (
             <div className="flex justify-center mt-2">
               <svg
