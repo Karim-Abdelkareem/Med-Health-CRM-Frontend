@@ -2,6 +2,8 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import React, { useEffect, useState } from "react";
 import userService from "../../store/User/UserService";
 import planService from "../../store/Plan/planyService";
+import { toast } from "react-hot-toast";
+import { CgNotes } from "react-icons/cg";
 
 // Reusable Select Input Component
 const SelectInput = ({ id, label, value, onChange, options, placeholder }) => {
@@ -61,71 +63,197 @@ const DateInput = ({ label, value, onChange }) => {
   );
 };
 
-// Plan Region Card Component
-const PlanRegionCard = ({ region }) => {
+// Add a new component for adding notes to a location
+const LocationNoteForm = ({ planId, locationId, onNoteSaved }) => {
+  const [note, setNote] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!note.trim()) return;
+
+    try {
+      setIsSubmitting(true);
+      // Use addRoleBasedNotesToPlan instead of addNotesToPlanLocation
+      await planService.addRoleBasedNotesToPlan(planId, locationId, note);
+      toast.success("Note added successfully");
+      setNote(""); // Clear the input
+      if (onNoteSaved) onNoteSaved(); // Callback to refresh data
+    } catch (error) {
+      console.error("Error adding note:", error);
+      toast.error("Failed to add note");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-4 hover:shadow-lg transition-shadow duration-300">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <div className="bg-gray-50 p-3 rounded-lg">
-          <p className="text-gray-700">
-            <span className="font-semibold">Location:</span> {region.location}
-          </p>
-        </div>
-        <div
-          className={`p-3 rounded-lg ${
-            region.status === "completed"
-              ? "bg-green-50 text-green-700"
-              : region.status === "pending"
-              ? "bg-yellow-50 text-yellow-700"
-              : "bg-blue-50 text-red-700"
-          }`}
+    <form onSubmit={handleSubmit} className="mt-4">
+      <div className="flex flex-col space-y-2">
+        <label
+          htmlFor="locationNote"
+          className="text-sm font-medium text-gray-700"
         >
-          <p>
-            <span className="font-semibold">Status:</span> {region.status}
-          </p>
-        </div>
-        <div className="bg-gray-50 p-3 rounded-lg">
-          <p className="text-gray-700">
+          Add Note
+        </label>
+        <textarea
+          id="locationNote"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          className="border border-gray-300 rounded-md p-2 text-sm"
+          rows="3"
+          placeholder="Enter your note for this location..."
+        />
+        <button
+          type="submit"
+          disabled={!note.trim() || isSubmitting}
+          className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? "Saving..." : "Save Note"}
+        </button>
+      </div>
+    </form>
+  );
+};
+
+// Plan Region Card Component
+const PlanRegionCard = ({ region, onDataRefresh }) => {
+  const [showNoteForm, setShowNoteForm] = useState(false);
+
+  // Get the plan ID from the region or parent plan
+  const planId =
+    region.planId || region._parentPlan?.id || region.parentPlan?.id;
+  const locationId = region._id || region.location?._id;
+
+  // Handle both old and new data structures
+  const locationName =
+    region.location?.locationName || region.location || "Unknown Location";
+  const latitude = parseFloat(
+    region.location?.latitude || region.latitude || 0
+  );
+  const longitude = parseFloat(
+    region.location?.longitude || region.longitude || 0
+  );
+
+  // More robust handling of visitDate
+  let visitDate;
+  if (region.visitDate) {
+    visitDate = region.visitDate;
+  } else if (region.location?.visitDate) {
+    visitDate = region.location.visitDate;
+  } else if (region.plan?.visitDate) {
+    visitDate = region.plan.visitDate;
+  } else {
+    // Try to get visitDate from parent plan if available
+    const parentPlan = region._parentPlan || region.parentPlan;
+    if (parentPlan && parentPlan.visitDate) {
+      visitDate = parentPlan.visitDate;
+    } else {
+      visitDate = new Date().toISOString();
+    }
+  }
+
+  const status = region.status || "incomplete";
+
+  // Check if coordinates are valid
+  const hasValidCoordinates =
+    !isNaN(latitude) &&
+    !isNaN(longitude) &&
+    (latitude !== 0 || longitude !== 0);
+
+  return (
+    <div className="bg-white p-4 rounded-lg border border-gray-200 mb-4 hover:shadow-sm transition-shadow">
+      <div className="flex justify-between items-start">
+        <div>
+          <h4 className="font-semibold text-gray-800">{locationName}</h4>
+          <p className="text-gray-600 mt-1">
             <span className="font-semibold">Visit Date:</span>{" "}
-            {new Date(region.visitDate).toLocaleDateString()}
+            {visitDate
+              ? new Date(visitDate).toLocaleDateString("en-GB")
+              : "Not scheduled"}
+          </p>
+          <p className="text-gray-600 mt-1">
+            <span className="font-semibold">Status:</span>{" "}
+            <span
+              className={`${
+                status.toLowerCase() === "completed"
+                  ? "text-green-600"
+                  : "text-red-600"
+              }`}
+            >
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </span>
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         {/* Map showing location's longitude and latitude */}
-        <div className="h-64 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-          <h5 className="font-semibold text-lg bg-gray-50 p-3 border-b">
-            Location Map
-          </h5>
-          <MapContainer
-            center={[region.latitude, region.longitude]}
-            zoom={13}
-            scrollWheelZoom={false}
-            style={{ height: "calc(100% - 42px)", width: "100%" }}
-          >
-            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            <Marker position={[region.latitude, region.longitude]}>
-              <Popup>{`Location: ${region.location}`}</Popup>
-            </Marker>
-          </MapContainer>
-        </div>
-
-        {/* Conditional rendering of the visited map only if the status is 'completed' */}
-        {region.status === "completed" ? (
+        {hasValidCoordinates ? (
           <div className="h-64 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
             <h5 className="font-semibold text-lg bg-gray-50 p-3 border-b">
-              Visited Location
+              Location Map
             </h5>
             <MapContainer
-              center={[region.latitude, region.longitude]} // Replace with visited coordinates if available
+              center={[latitude, longitude]}
               zoom={13}
               scrollWheelZoom={false}
               style={{ height: "calc(100% - 42px)", width: "100%" }}
             >
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-              <Marker position={[region.latitude, region.longitude]}>
-                <Popup>{`Visited Location: ${region.location}`}</Popup>
+              <Marker position={[latitude, longitude]}>
+                <Popup>{`Location: ${locationName}`}</Popup>
+              </Marker>
+            </MapContainer>
+          </div>
+        ) : (
+          <div className="h-64 border border-gray-200 rounded-lg flex items-center justify-center bg-gray-50 text-gray-500">
+            <div className="text-center p-6">
+              <svg
+                className="w-16 h-16 mx-auto text-gray-400 mb-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+                ></path>
+              </svg>
+              <h5 className="font-semibold text-lg">No Location Data</h5>
+              <p className="mt-2">
+                Coordinates are not available for this location.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Conditional rendering of the visited map only if the status is 'completed' */}
+        {status.toLowerCase() === "completed" ? (
+          <div className="h-64 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+            <h5 className="font-semibold text-lg bg-gray-50 p-3 border-b">
+              Visited Location
+            </h5>
+            <MapContainer
+              center={[
+                parseFloat(region.visitedLatitude || latitude),
+                parseFloat(region.visitedLongitude || longitude),
+              ]}
+              zoom={13}
+              scrollWheelZoom={false}
+              style={{ height: "calc(100% - 42px)", width: "100%" }}
+            >
+              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              <Marker
+                position={[
+                  parseFloat(region.visitedLatitude || latitude),
+                  parseFloat(region.visitedLongitude || longitude),
+                ]}
+              >
+                <Popup>{`Visited Location: ${locationName}`}</Popup>
               </Marker>
             </MapContainer>
           </div>
@@ -154,12 +282,75 @@ const PlanRegionCard = ({ region }) => {
           </div>
         )}
       </div>
+
+      {/* Add a button to toggle the note form */}
+      <div className="mt-4 flex justify-end">
+        <button
+          onClick={() => setShowNoteForm(!showNoteForm)}
+          className="bg-blue-100 text-blue-700 px-3 py-1 rounded-md text-sm font-medium hover:bg-blue-200 flex items-center gap-1"
+        >
+          <CgNotes size={16} />
+          {showNoteForm ? "Hide Note Form" : "Add Note"}
+        </button>
+      </div>
+
+      {/* Show the note form when the button is clicked */}
+      {showNoteForm && planId && locationId && (
+        <LocationNoteForm
+          planId={planId}
+          locationId={locationId}
+          onNoteSaved={() => {
+            setShowNoteForm(false);
+            if (onDataRefresh) onDataRefresh();
+          }}
+        />
+      )}
+
+      {/* Notes Section */}
+      {region.notes && region.notes.length > 0 && (
+        <div className="mt-6">
+          <h5 className="font-semibold text-lg mb-2">Notes</h5>
+          <div className="space-y-2">
+            {region.notes.map((note, idx) => (
+              <div
+                key={idx}
+                className="p-3 bg-gray-50 rounded-lg border border-gray-200"
+              >
+                {typeof note === "string" ? (
+                  <p>{note}</p>
+                ) : (
+                  <div>
+                    {note.location && (
+                      <div className="mb-1 text-sm text-gray-600">
+                        <span className="font-medium">Location:</span>{" "}
+                        {typeof note.location === "string"
+                          ? note.location
+                          : note.location.locationName || "Unknown Location"}
+                      </div>
+                    )}
+                    <div className="text-gray-700">
+                      {note.note || "No note content"}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 // Plan Card Component
-const PlanCard = ({ plan }) => {
+const PlanCard = ({ plan, onDataRefresh }) => {
+  // Handle both old and new data structures
+  const visitDate =
+    plan.visitDate || plan.date || plan.startDate || new Date().toISOString();
+
+  // Handle regions/plans array
+  const regions = plan.region || plan.plans || plan.locations || [];
+
   return (
     <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-6 hover:shadow-lg transition-shadow duration-300">
       <div className="border-b border-gray-200 pb-4 mb-6">
@@ -167,25 +358,34 @@ const PlanCard = ({ plan }) => {
         <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-gray-50 p-3 rounded-lg">
             <p className="text-lg text-gray-700">
-              <span className="font-semibold">Type:</span> {plan.type}
-            </p>
-          </div>
-          <div className="bg-gray-50 p-3 rounded-lg">
-            <p className="text-lg text-gray-700">
               <span className="font-semibold">Date:</span>{" "}
-              {new Date(plan.date).toLocaleDateString()}
+              {new Date(visitDate).toLocaleDateString("en-GB")}
             </p>
           </div>
         </div>
       </div>
 
       <h4 className="text-lg font-semibold text-gray-800 mb-4">
-        Regions ({plan.region.length})
+        Regions ({regions.length})
       </h4>
 
-      {plan.region.map((region) => (
-        <PlanRegionCard key={region._id} region={region} />
-      ))}
+      {regions.map((region, index) => {
+        // Create a new region object with the plan's visitDate as a fallback
+        const regionWithFallback = {
+          ...region,
+          _parentPlan: { visitDate, id: plan._id }, // Add plan ID to parent plan reference
+          visitDate: region.visitDate || visitDate, // Use region's visitDate if available, otherwise use plan's
+          planId: plan._id, // Add plan ID directly to region
+        };
+
+        return (
+          <PlanRegionCard
+            key={region._id || index}
+            region={regionWithFallback}
+            onDataRefresh={onDataRefresh}
+          />
+        );
+      })}
     </div>
   );
 };
@@ -212,6 +412,12 @@ export default function UsersPlan() {
   const [endDate, setEndDate] = useState(currentDate);
   const [plansData, setPlansData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Add a function to refresh the data
+  const refreshData = () => {
+    setRefreshTrigger((prev) => prev + 1);
+  };
 
   // Role options
   const roleOptions = [
@@ -253,6 +459,7 @@ export default function UsersPlan() {
         endDate,
         selectedUser
       );
+      console.log(response.data);
       setPlansData(response.data);
     } catch (err) {
       console.error("Error fetching plans:", err);
@@ -265,7 +472,7 @@ export default function UsersPlan() {
     if (selectedUser) {
       getMonthlyPlans();
     }
-  }, [selectedUser, startDate, endDate]);
+  }, [selectedUser, startDate, endDate, refreshTrigger]);
 
   // Handle role change
   const handleRoleChange = (e) => {
@@ -361,7 +568,11 @@ export default function UsersPlan() {
               ) : plansData.length > 0 ? (
                 <div>
                   {plansData.map((plan) => (
-                    <PlanCard key={plan._id} plan={plan} />
+                    <PlanCard
+                      key={plan._id}
+                      plan={plan}
+                      onDataRefresh={refreshData}
+                    />
                   ))}
                 </div>
               ) : (

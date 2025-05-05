@@ -7,6 +7,7 @@ import { FaMapMarkerAlt } from "react-icons/fa";
 import toast from "react-hot-toast";
 import monthlyService from "../../store/Monthly/monthlyService";
 import LocationMap from "../../components/Representative/PlanMap";
+import EditPlanModal from "../../components/EditPlanModal";
 
 export default function MyPlans() {
   const [planData, setplanData] = useState([]);
@@ -17,6 +18,8 @@ export default function MyPlans() {
   });
   const [error, setError] = useState(null);
   const [currentDayPlanData, setCurrentDayPlanData] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedPlanData, setSelectedPlanData] = useState(null);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -79,11 +82,21 @@ export default function MyPlans() {
   const [selectedPlanId, setSelectedPlanId] = useState(null);
   const [selectedRegionId, setSelectedRegionId] = useState(null);
 
-  const updateToVisited = async () => {
+  const updateToVisited = async (planId, regionId) => {
     try {
+      // Use the passed parameters instead of state values
+      const planIdToUse = planId || selectedPlanId;
+      const regionIdToUse = regionId || selectedRegionId;
+      
+      // Validate IDs before making the API call
+      if (!planIdToUse || !regionIdToUse) {
+        toast.error("Invalid plan or location data");
+        return;
+      }
+      
       await planService.updateToVisited(
-        selectedPlanId,
-        selectedRegionId,
+        planIdToUse,
+        regionIdToUse,
         location
       );
       toast.success("Plan updated successfully");
@@ -94,14 +107,35 @@ export default function MyPlans() {
     }
   };
 
-  const cancelVisit = async () => {
+  const cancelVisit = async (planId, regionId) => {
     try {
-      await planService.unVisitRegion(selectedPlanId, selectedRegionId);
+      // Use the passed parameters instead of state values
+      const planIdToUse = planId || selectedPlanId;
+      const regionIdToUse = regionId || selectedRegionId;
+      
+      // Validate IDs before making the API call
+      if (!planIdToUse || !regionIdToUse) {
+        toast.error("Invalid plan or location data");
+        return;
+      }
+      
+      await planService.unVisitRegion(planIdToUse, regionIdToUse);
       toast.success("Plan updated successfully");
       fetchPlanData();
     } catch (err) {
       console.error("Error updating plan:", err);
       toast.error("Error updating plan");
+    }
+  };
+
+  const updatePlan = async (updatedPlan) => {
+    try {
+      await planService.updatePlan(updatedPlan._id, updatedPlan);
+      toast.success("Plan updated successfully");
+      fetchPlanData(); // Refresh data after updating
+    } catch (err) {
+      console.error("Update failed", err);
+      toast.error("Failed to update plan");
     }
   };
 
@@ -174,6 +208,16 @@ export default function MyPlans() {
                           )}
                         </p>
                       </div>
+                      <button
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1"
+                        onClick={() => {
+                          setIsEditModalOpen(true);
+                          setSelectedPlanData(planToShow);
+                        }}
+                      >
+                        <CgNotes size={16} />
+                        Edit Plan
+                      </button>
                     </div>
                   </div>
 
@@ -237,9 +281,11 @@ export default function MyPlans() {
                                   <button
                                     className="bg-green-100 text-green-700 text-sm px-3 py-1 rounded hover:bg-green-200 transition"
                                     onClick={() => {
+                                      // Set state for future use
                                       setSelectedPlanId(planToShow._id);
                                       setSelectedRegionId(region._id);
-                                      updateToVisited();
+                                      // Pass IDs directly to the function
+                                      updateToVisited(planToShow._id, region._id);
                                     }}
                                   >
                                     Mark as Visited
@@ -250,9 +296,11 @@ export default function MyPlans() {
                                   <button
                                     className="bg-red-100 text-red-700 text-sm px-3 py-1 rounded hover:bg-red-200 transition"
                                     onClick={() => {
+                                      // Set state for future use
                                       setSelectedPlanId(planToShow._id);
                                       setSelectedRegionId(region._id);
-                                      cancelVisit();
+                                      // Pass IDs directly to the function
+                                      cancelVisit(planToShow._id, region._id);
                                     }}
                                   >
                                     Cancel Visit
@@ -274,9 +322,35 @@ export default function MyPlans() {
                         </h3>
                         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                           {planToShow.notes?.length > 0 ? (
-                            <p className="text-gray-700 whitespace-pre-line">
-                              {planToShow.notes}
-                            </p>
+                            <div className="space-y-2">
+                              {planToShow.notes.map((noteItem, idx) => (
+                                <div key={idx} className="p-3 bg-white rounded border border-gray-100">
+                                  <div className="border-b border-gray-100 pb-2 mb-2">
+                                    <h4 className="font-medium text-blue-700">Note #{idx + 1}</h4>
+                                  </div>
+                                  {typeof noteItem === 'string' ? (
+                                    <p>{noteItem}</p>
+                                  ) : (
+                                    <div>
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <p className="text-gray-500">Location:</p>
+                                        <p className="font-medium">
+                                          {noteItem.location?.locationName ||
+                                            noteItem.locationName ||
+                                            "Location"}
+                                        </p>
+                                      </div>
+                                      <div className="flex items-start gap-2">
+                                        <p className="text-gray-500">Note:</p>
+                                        <p className="text-gray-700 whitespace-pre-line">
+                                          {noteItem.note}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
                           ) : (
                             <p className="text-gray-700 whitespace-pre-line">
                               No notes added
@@ -324,6 +398,14 @@ export default function MyPlans() {
           )}
         </div>
       </div>
+      {isEditModalOpen && selectedPlanData && (
+        <EditPlanModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onUpdate={updatePlan}
+          selectedPlanData={selectedPlanData}
+        />
+      )}
     </div>
   );
 }

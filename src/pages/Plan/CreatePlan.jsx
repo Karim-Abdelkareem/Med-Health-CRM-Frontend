@@ -131,7 +131,6 @@ export default function CreatePlan() {
         {selectedPlan === "weekly" && (
           <WeeklyPlan
             planData={planData}
-            selectedPlan={selectedPlan}
             openWeeks={openWeeks}
             setOpenWeeks={setOpenWeeks}
             setIsViewModalOpen={setIsViewModalOpen}
@@ -173,7 +172,7 @@ export default function CreatePlan() {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         onUpdate={updatePlan}
-        plan={selectedPlanData}
+        selectedPlanData={selectedPlanData}
       />
       {/* View Plan Modal */}
       <ViewPlanModal

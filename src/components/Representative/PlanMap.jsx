@@ -61,7 +61,7 @@ export default function LocationMap({ location, status, userLocation }) {
         return visitedIcon;
       case "pending":
         return pendingIcon;
-      case "cancelled":
+      case "incomplete":
         return cancelledIcon;
       default:
         return defaultIcon;
@@ -83,7 +83,7 @@ export default function LocationMap({ location, status, userLocation }) {
   const zoom = 14;
 
   return (
-    <div className="w-full h-48 rounded overflow-hidden border border-gray-200">
+    <div className="w-full h-96 rounded overflow-hidden border border-gray-200">
       <MapContainer
         center={center}
         zoom={zoom}

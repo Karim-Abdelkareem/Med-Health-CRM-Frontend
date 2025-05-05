@@ -4,19 +4,34 @@ import { IoLocationSharp } from "react-icons/io5";
 import { CgNotes } from "react-icons/cg";
 import { FaEye, FaTrash } from "react-icons/fa";
 import { FiEdit } from "react-icons/fi";
+
 export default function WeeklyPlan({
   planData,
   openWeeks,
   setOpenWeeks,
-  setIsDeleteModalOpen,
   setIsEditModalOpen,
   setSelectedPlanData,
   setIsViewModalOpen,
-  setSelectedPlanId,
 }) {
+  // Make sure all these props are being used correctly
+
+
+
+  // Helper function to find location note
+  const findLocationNote = (plan, locationId) => {
+    if (!plan.notes) return null;
+
+    const noteObj = plan.notes.find(
+      (note) =>
+        note.location === locationId ||
+        (note.location._id && note.location._id === locationId)
+    );
+
+    return noteObj ? noteObj.note : null;
+  };
+
   return (
     <div>
-      {" "}
       <div className="space-y-4">
         {planData.plans?.length > 0 ? (
           Array.from(
@@ -38,7 +53,6 @@ export default function WeeklyPlan({
                   <div
                     className="bg-gray-100 p-4 cursor-pointer flex items-center justify-between hover:bg-gray-200 transition-colors"
                     onClick={() => {
-                      // Toggle this specific accordion using React state
                       setOpenWeeks((prev) => ({
                         ...prev,
                         [weekId]: !prev[weekId],
@@ -104,14 +118,6 @@ export default function WeeklyPlan({
                                     setIsEditModalOpen(true);
                                   }}
                                 />
-                                <FaTrash
-                                  size={18}
-                                  className="text-red-600 hover:text-red-700 cursor-pointer"
-                                  onClick={() => {
-                                    setSelectedPlanId(plan._id);
-                                    setIsDeleteModalOpen(true);
-                                  }}
-                                />
                               </div>
                             </div>
 
@@ -125,56 +131,96 @@ export default function WeeklyPlan({
                             </div>
 
                             <div className="mt-3 space-y-2">
-                              {plan.locations.map((region, locationIndex) => (
-                                <div
-                                  key={locationIndex}
-                                  className="flex items-start gap-2"
-                                >
-                                  <IoLocationSharp
-                                    size={16}
-                                    className="mt-1 text-gray-600"
-                                  />
-                                  <div className="flex-1">
-                                    <p className="text-sm font-medium">
-                                      {region.location.locationName}
-                                    </p>
-                                    <p className="text-xs text-gray-500 truncate">
-                                      {region.location.address}
-                                    </p>
-                                    <div className="flex items-center mt-1">
-                                      <span
-                                        className={`text-xs px-2 py-0.5 rounded-full ${
-                                          {
-                                            completed:
-                                              "bg-green-100 text-green-800",
-                                            pending:
-                                              "bg-yellow-100 text-yellow-800",
-                                            cancelled:
-                                              "bg-red-100 text-red-800",
-                                          }[
-                                            region.status?.toLowerCase().trim()
-                                          ] || "bg-gray-100"
-                                        }`}
-                                      >
-                                        {region.status}
-                                      </span>
+                              {plan.locations?.map(
+                                (location, locationIndex) => {
+                                  // Find note for this location if it exists
+                                  const locationNote = findLocationNote(
+                                    plan,
+                                    location.location._id
+                                  );
+
+                                  return (
+                                    <div
+                                      key={locationIndex}
+                                      className="flex items-start gap-2"
+                                    >
+                                      <IoLocationSharp
+                                        size={16}
+                                        className="mt-1 text-gray-600"
+                                      />
+                                      <div className="flex-1">
+                                        <p className="text-sm font-medium">
+                                          {location.location.locationName}
+                                        </p>
+                                        <p className="text-xs text-gray-500 truncate">
+                                          {location.location.address}
+                                        </p>
+                                        <div className="flex items-center mt-1">
+                                          <span
+                                            className={`text-xs px-2 py-0.5 rounded-full ${
+                                              location.status === "completed"
+                                                ? "bg-green-100 text-green-800"
+                                                : "bg-red-100 text-red-800"
+                                            }`}
+                                          >
+                                            {location.status}
+                                          </span>
+                                        </div>
+
+                                        {/* Display location note if available */}
+                                        {locationNote && (
+                                          <div className="mt-1 pt-1">
+                                            <div className="flex items-center gap-1 text-xs">
+                                              <CgNotes size={12} />
+                                              <p className="text-gray-700 font-medium">
+                                                Location Note
+                                              </p>
+                                            </div>
+                                            <p className="mt-0.5 text-xs text-gray-600 line-clamp-2">
+                                              {locationNote}
+                                            </p>
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
-                                  </div>
-                                </div>
-                              ))}
+                                  );
+                                }
+                              )}
                             </div>
 
-                            {plan.notes && (
+                            {/* Tasks section */}
+                            {plan.tasks && plan.tasks.length > 0 && (
                               <div className="mt-3 pt-2 border-t border-gray-200">
                                 <div className="flex items-center gap-1 text-sm">
                                   <CgNotes size={14} />
                                   <p className="text-gray-700 font-medium">
-                                    Notes
+                                    Tasks
                                   </p>
                                 </div>
-                                <p className="mt-1 text-xs text-gray-600 line-clamp-2">
-                                  {plan.notes}
-                                </p>
+                                <div className="mt-1 space-y-1">
+                                  {plan.tasks.map((task, taskIndex) => (
+                                    <div
+                                      key={taskIndex}
+                                      className="flex items-start gap-1"
+                                    >
+                                      <span className="text-xs mt-0.5">•</span>
+                                      <div>
+                                        <p className="text-xs text-gray-600">
+                                          {task.task}
+                                        </p>
+                                        <span
+                                          className={`text-xs px-1 py-0.5 rounded-full  ${
+                                            task.status === "completed"
+                                              ? "bg-green-100 text-green-800"
+                                              : "bg-red-100 text-red-800"
+                                          }`}
+                                        >
+                                          {task.status}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
                             )}
                           </div>

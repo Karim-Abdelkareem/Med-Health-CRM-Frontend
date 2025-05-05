@@ -69,8 +69,6 @@ const userService = {
   },
 
   getUsersByRole: async (role) => {
-    console.log(role);
-
     const token = getAuthToken();
     const response = await axios.get(`${API_URL}/get/role?role=${role}`, {
       headers: {

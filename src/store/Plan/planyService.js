@@ -59,17 +59,17 @@ const planService = {
     return response.data;
   },
 
-  updateToVisited: async (id, region, data) => {
+  updateToVisited: async (id, locationId, data) => {
     const token = getAuthToken();
     const response = await axios.put(
-      `${API_URL}/complete/${id}/${region}`,
+      `${API_URL}/complete/${id}/${locationId}`,
       {
         visitedLatitude: data.visitedLatitude,
         visitedLongitude: data.visitedLongitude,
       },
       {
         headers: {
-          Authorization: `Beerar ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       }
     );
@@ -94,6 +94,63 @@ const planService = {
     const token = getAuthToken();
     const response = await axios.get(
       `${API_URL}/monthly?startDate=${startDate}&endDate=${endDate}&userId=${userId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  },
+
+  addNotesToPlanLocation: async (planId, locationId, note) => {
+    const token = getAuthToken();
+    const response = await axios.post(
+      `${API_URL}/${planId}/locations/${locationId}/notes`,
+      { note },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  },
+
+  editNoteInPlanLocation: async (planId, locationId, noteId, note) => {
+    const token = getAuthToken();
+    const response = await axios.patch(
+      `${API_URL}/${planId}/locations/${locationId}/notes/${noteId}`,
+      { note },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  },
+
+  deleteNoteInPlanLocation: async (planId, locationId, noteId) => {
+    const token = getAuthToken();
+    const response = await axios.delete(
+      `${API_URL}/${planId}/locations/${locationId}/notes/${noteId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  },
+
+  addRoleBasedNotesToPlan: async (planId, locationId, note) => {
+    const token = getAuthToken();
+    const response = await axios.post(
+      `${API_URL}/${planId}/locations/${locationId}/role-notes`,
+      {
+        note,
+      },
       {
         headers: {
           Authorization: `Bearer ${token}`,
