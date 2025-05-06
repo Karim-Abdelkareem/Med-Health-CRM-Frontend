@@ -9,6 +9,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import MyPlans from "../pages/Plan/MyPlans";
 import UsersPlan from "../pages/UsersPlan/UsersPlan";
 import Location from "../pages/Location/Loaction";
+import CreateUser from "../pages/CreateUser/CreateUser";
 
 export default function AppRoutes() {
   return (
@@ -28,6 +29,7 @@ export default function AppRoutes() {
         <Route path="/my-plans" element={<MyPlans />} />
         <Route path="/users-plans" element={<UsersPlan />} />
         <Route path="add-location" element={<Location />} />
+        <Route path="/add-user" element={<CreateUser />} />
       </Route>
       <Route path="*" element={<div>Not Found</div>} />
     </Routes>

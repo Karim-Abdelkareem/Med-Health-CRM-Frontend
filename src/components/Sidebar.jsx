@@ -13,6 +13,8 @@ import { MdOutlineAddLocationAlt, MdOutlineEditCalendar } from "react-icons/md";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { BsListTask } from "react-icons/bs";
+import { HiOutlineUserAdd } from "react-icons/hi";
+import MobileMenu from "./MobileMenu";
 
 export default function Sidebar() {
   const { user } = useAuth();
@@ -20,6 +22,7 @@ export default function Sidebar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [bgColor, setBgColor] = useState("#000000");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const dropdownRef = useRef(null);
 
@@ -157,6 +160,11 @@ export default function Sidebar() {
       icon: <BsListTask />,
     },
     {
+      path: "/add-user",
+      name: "Add User",
+      icon: <HiOutlineUserAdd />,
+    },
+    {
       path: "/settings",
       name: "Settings",
       icon: <FiSettings />,
@@ -172,102 +180,115 @@ export default function Sidebar() {
       icon: <FiBell />,
     },
   ];
+
   return (
-    <div
-      className={`bg-gray-100 h-full shadow-lg flex flex-col border-r border-gray-200 justify-between text-black transition-[width] duration-300 overflow-hidden ${
-        isSidebarOpen ? "w-64" : "w-16"
-      }`}
-    >
-      <div className="pt-4" ref={dropdownRef}>
-        {/* App logo and user dropdown */}
-        <button
-          onClick={toggleUserDropdown}
-          className={`flex justify-between w-full items-center hover:bg-gray-200 rounded duration-200 transition-all`}
-        >
-          <div className="m-auto p-4 flex justify-between items-center w-full">
-            <div
-              className={`h-8 w-8  ${
-                isSidebarOpen && "mr-4"
-              } rounded-full flex items-center justify-center text-white font-bold`}
-              style={{ backgroundColor: bgColor }}
-            >
-              {user?.name.charAt(0).toUpperCase()}
-            </div>
-            {isSidebarOpen && (
-              <>
-                <div className="flex flex-col items-start">
-                  {isSidebarOpen && (
-                    <div className="ml-2 text-sm font-semibold">
-                      Med-Health CRM
-                    </div>
-                  )}
+    <>
+      {/* Desktop Sidebar */}
+      <div
+        className={`bg-gray-100 h-full shadow-lg flex-col border-r border-gray-200 justify-between text-black transition-[width] duration-300 overflow-hidden hidden md:flex ${
+          isSidebarOpen ? "w-64" : "w-16"
+        }`}
+      >
+        <div className="pt-4" ref={dropdownRef}>
+          {/* App logo and user dropdown */}
+          <button
+            onClick={toggleUserDropdown}
+            className={`flex justify-between w-full items-center hover:bg-gray-200 rounded duration-200 transition-all`}
+          >
+            <div className="m-auto p-4 flex justify-between items-center w-full">
+              <div
+                className={`h-8 w-8 ${
+                  isSidebarOpen && "mr-4"
+                } rounded-full flex items-center justify-center text-white font-bold`}
+                style={{ backgroundColor: bgColor }}
+              >
+                {user?.name?.charAt(0).toUpperCase() || "U"}
+              </div>
+              {isSidebarOpen && (
+                <>
                   <div className="flex flex-col items-start">
-                    <span className="ml-2 text-xs text-gray-600 font-medium">
-                      {user?.name}
-                    </span>
-                    <span className="ml-2  text-xs text-gray-600 font-medium">
-                      {user?.role}
-                    </span>
+                    {isSidebarOpen && (
+                      <div className="ml-2 text-sm font-semibold">
+                        Med-Health CRM
+                      </div>
+                    )}
+                    <div className="flex flex-col items-start">
+                      <span className="ml-2 text-xs text-gray-600 font-medium">
+                        {user?.name || "User"}
+                      </span>
+                      <span className="ml-2 text-xs text-gray-600 font-medium">
+                        {user?.role || "Guest"}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <FiChevronDown className="ml-auto" />
-              </>
+                  <FiChevronDown className="ml-auto" />
+                </>
+              )}
+            </div>
+          </button>
+          <div className="mb-6">
+            {isUserDropdownOpen && (
+              <div className="absolute left-2 max-w-60 right-0 mt-1 bg-white shadow-md rounded-md py-1 z-10 border border-gray-200">
+                <a href="#" className="block px-4 py-2 text-sm hover:bg-gray-100">
+                  Profile
+                </a>
+                <a href="#" className="block px-4 py-2 text-sm hover:bg-gray-100">
+                  Settings
+                </a>
+                <Link
+                  to={"/login"}
+                  className="block px-4 py-2 text-sm hover:bg-gray-100 text-red-500"
+                >
+                  Sign out
+                </Link>
+              </div>
             )}
           </div>
-        </button>
-        <div className="mb-6">
-          {isUserDropdownOpen && (
-            <div className="absolute left-2 max-w-60 right-0 mt-1 bg-white shadow-md rounded-md py-1 z-10 border border-gray-200">
-              <a href="#" className="block px-4 py-2 text-sm hover:bg-gray-100">
-                Profile
-              </a>
-              <a href="#" className="block px-4 py-2 text-sm hover:bg-gray-100">
-                Settings
-              </a>
-              <Link
-                to={"/login"}
-                className="block px-4 py-2 text-sm hover:bg-gray-100 text-red-500"
-              >
-                Sign out
-              </Link>
-            </div>
-          )}
+
+          {/* Sidebar navigation */}
+          <nav className="mt-6">
+            <ul>
+              {routes.map((route) => (
+                <li key={route.path} className="mb-2">
+                  <Link
+                    to={route.path}
+                    className={`flex ${
+                      isSidebarOpen ? "justify-start" : "justify-center"
+                    } items-center px-2 py-4 hover:bg-gray-200 rounded duration-200 transition-all`}
+                  >
+                    {React.cloneElement(route.icon, {
+                      size: isSidebarOpen ? 20 : 24,
+                      className: "text-sm",
+                    })}
+                    {isSidebarOpen && <span className="ml-2">{route.name}</span>}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </div>
 
-        {/* Sidebar navigation */}
-        <nav className="mt-6">
-          <ul>
-            {routes.map((route) => (
-              <li key={route.path} className="mb-2">
-                <Link
-                  to={route.path}
-                  className={`flex ${
-                    isSidebarOpen ? "justify-start" : "justify-center"
-                  } items-center px-2 py-4 hover:bg-gray-200 rounded duration-200 transition-all`}
-                >
-                  {React.cloneElement(route.icon, {
-                    size: isSidebarOpen ? 20 : 24,
-                    className: "text-sm",
-                  })}
-                  {isSidebarOpen && <span className="ml-2">{route.name}</span>}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <div className="mt-auto">
+          <button
+            onClick={toggleSidebar}
+            className={`w-full flex ${
+              isSidebarOpen ? "justify-start" : "justify-center"
+            } items-center p-4 text-base text-gray-800 hover:text-gray-900 font-semibold hover:bg-gray-200 rounded`}
+          >
+            {isSidebarOpen ? <FiChevronLeft /> : <FiChevronRight />}
+            {isSidebarOpen && <span className="ml-1 text-sm">Collapse</span>}
+          </button>
+        </div>
       </div>
 
-      <div className="mt-auto">
-        <button
-          onClick={toggleSidebar}
-          className={`w-full flex ${
-            isSidebarOpen ? "justify-start" : "justify-center"
-          } items-center p-4 text-base text-gray-800 hover:text-gray-900 font-semibold hover:bg-gray-200 rounded`}
-        >
-          {isSidebarOpen ? <FiChevronLeft /> : <FiChevronRight />}
-          {isSidebarOpen && <span className="ml-1 text-sm">Collapse</span>}
-        </button>
-      </div>
-    </div>
+      {/* Mobile Menu Component */}
+      <MobileMenu 
+        user={user}
+        routes={routes}
+        bgColor={bgColor}
+        isMobileMenuOpen={isMobileMenuOpen}
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
+      />
+    </>
   );
 }

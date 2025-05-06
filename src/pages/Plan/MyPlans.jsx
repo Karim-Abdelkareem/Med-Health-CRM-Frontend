@@ -70,8 +70,7 @@ export default function MyPlans() {
         setCurrentDayPlanData(planToShow);
       }
     } catch (err) {
-      console.log(err);
-      toast.error("Failed to fetch plan data");
+      toast.error(err.response?.data?.error.message);
     }
   };
 
@@ -87,18 +86,14 @@ export default function MyPlans() {
       // Use the passed parameters instead of state values
       const planIdToUse = planId || selectedPlanId;
       const regionIdToUse = regionId || selectedRegionId;
-      
+
       // Validate IDs before making the API call
       if (!planIdToUse || !regionIdToUse) {
         toast.error("Invalid plan or location data");
         return;
       }
-      
-      await planService.updateToVisited(
-        planIdToUse,
-        regionIdToUse,
-        location
-      );
+
+      await planService.updateToVisited(planIdToUse, regionIdToUse, location);
       toast.success("Plan updated successfully");
       fetchPlanData();
     } catch (err) {
@@ -112,13 +107,13 @@ export default function MyPlans() {
       // Use the passed parameters instead of state values
       const planIdToUse = planId || selectedPlanId;
       const regionIdToUse = regionId || selectedRegionId;
-      
+
       // Validate IDs before making the API call
       if (!planIdToUse || !regionIdToUse) {
         toast.error("Invalid plan or location data");
         return;
       }
-      
+
       await planService.unVisitRegion(planIdToUse, regionIdToUse);
       toast.success("Plan updated successfully");
       fetchPlanData();
@@ -138,6 +133,83 @@ export default function MyPlans() {
       toast.error("Failed to update plan");
     }
   };
+
+  // Helper function to get location name from ID
+  const getLocationName = (plan, locationId) => {
+    if (!plan || !plan.locations) return "Unknown Location";
+
+    const location = plan.locations.find(
+      (loc) => loc.location._id === locationId
+    );
+
+    return location ? location.location.locationName : "Unknown Location";
+  };
+
+  // Helper function to render note sections with special handling for HR notes
+  const renderNoteSection = (title, notes, planToShow) => (
+    <div key={title}>
+      <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+        <CgNotes size={20} />
+        {title.toUpperCase().replace("NOTES", "")} Notes
+      </h3>
+      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+        {title === "hrNotes" && Array.isArray(notes) ? (
+          notes.length > 0 ? (
+            <div className="space-y-3">
+              {notes.map((note, idx) => (
+                <div
+                  key={idx}
+                  className="p-3 bg-blue-50 rounded-lg border border-blue-200"
+                >
+                  <div className="flex justify-between mb-2">
+                    <span className="font-medium text-blue-700">
+                      {note.user?.name || "HR Member"}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      {note.createdAt
+                        ? new Date(note.createdAt).toLocaleString()
+                        : ""}
+                    </span>
+                  </div>
+                  {note.location && (
+                    <div className="mb-2 text-sm text-gray-600">
+                      <span className="font-medium">Location:</span>{" "}
+                      {typeof note.location === "object"
+                        ? note.location.locationName
+                        : "Unknown Location"}
+                    </div>
+                  )}
+                  <p className="text-gray-700">
+                    {note.type || "No note content"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-700 whitespace-pre-line italic">
+              No HR notes added
+            </p>
+          )
+        ) : Array.isArray(notes) ? (
+          notes.length > 0 ? (
+            <ul className="text-gray-700 whitespace-pre-line italic space-y-2">
+              {notes.map((note, idx) => (
+                <li key={idx}>• {note}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-700 whitespace-pre-line italic">
+              No notes added
+            </p>
+          )
+        ) : (
+          <p className="text-gray-700 whitespace-pre-line italic">
+            No notes added
+          </p>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="mx-6 space-y-6 my-6">
@@ -285,7 +357,10 @@ export default function MyPlans() {
                                       setSelectedPlanId(planToShow._id);
                                       setSelectedRegionId(region._id);
                                       // Pass IDs directly to the function
-                                      updateToVisited(planToShow._id, region._id);
+                                      updateToVisited(
+                                        planToShow._id,
+                                        region._id
+                                      );
                                     }}
                                   >
                                     Mark as Visited
@@ -324,20 +399,33 @@ export default function MyPlans() {
                           {planToShow.notes?.length > 0 ? (
                             <div className="space-y-2">
                               {planToShow.notes.map((noteItem, idx) => (
-                                <div key={idx} className="p-3 bg-white rounded border border-gray-100">
+                                <div
+                                  key={idx}
+                                  className="p-3 bg-white rounded border border-gray-100"
+                                >
                                   <div className="border-b border-gray-100 pb-2 mb-2">
-                                    <h4 className="font-medium text-blue-700">Note #{idx + 1}</h4>
+                                    <h4 className="font-medium text-blue-700">
+                                      Note #{idx + 1}
+                                    </h4>
                                   </div>
-                                  {typeof noteItem === 'string' ? (
+                                  {typeof noteItem === "string" ? (
                                     <p>{noteItem}</p>
                                   ) : (
                                     <div>
                                       <div className="flex items-center gap-2 mb-1">
-                                        <p className="text-gray-500">Location:</p>
+                                        <p className="text-gray-500">
+                                          Location:
+                                        </p>
                                         <p className="font-medium">
                                           {noteItem.location?.locationName ||
-                                            noteItem.locationName ||
-                                            "Location"}
+                                            (typeof noteItem.location ===
+                                            "string"
+                                              ? getLocationName(
+                                                  planToShow,
+                                                  noteItem.location
+                                                )
+                                              : noteItem.locationName ||
+                                                "Location")}
                                         </p>
                                       </div>
                                       <div className="flex items-start gap-2">
@@ -359,30 +447,26 @@ export default function MyPlans() {
                         </div>
                       </div>
 
-                      {/* Helper function to render note sections */}
-                      {["gmNotes", "dmNotes", "lmNotes", "hrNotes"].map(
-                        (noteType) => (
-                          <div key={noteType}>
-                            <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                              <CgNotes size={20} />
-                              {noteType.toUpperCase().replace("NOTES", "")}{" "}
-                              Notes
-                            </h3>
-                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                              {planToShow[noteType]?.length > 0 ? (
-                                <ul className="text-gray-700 whitespace-pre-line italic space-y-2">
-                                  {planToShow[noteType].map((note, idx) => (
-                                    <li key={idx}>• {note}</li>
-                                  ))}
-                                </ul>
-                              ) : (
-                                <p className="text-gray-700 whitespace-pre-line italic">
-                                  No notes added
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        )
+                      {/* Use the renderNoteSection helper for all note types */}
+                      {renderNoteSection(
+                        "gmNotes",
+                        planToShow.gmNotes,
+                        planToShow
+                      )}
+                      {renderNoteSection(
+                        "dmNotes",
+                        planToShow.dmNotes,
+                        planToShow
+                      )}
+                      {renderNoteSection(
+                        "lmNotes",
+                        planToShow.lmNotes,
+                        planToShow
+                      )}
+                      {renderNoteSection(
+                        "hrNotes",
+                        planToShow.hrNotes,
+                        planToShow
                       )}
                     </div>
                   </div>
