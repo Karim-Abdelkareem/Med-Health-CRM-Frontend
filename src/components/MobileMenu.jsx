@@ -49,7 +49,7 @@ export default function MobileMenu({
       {/* Mobile Sidebar */}
       <div
         ref={mobileMenuRef}
-        className={`fixed inset-y-0 left-0 z-40 w-1/2 bg-white/90 backdrop-blur-sm shadow-xl transform transition-transform duration-300 ease-in-out md:hidden ${
+        className={`fixed inset-y-0 left-0 z-40 w-[70%] bg-white/90 backdrop-blur-sm shadow-xl transform transition-transform duration-300 ease-in-out md:hidden ${
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
