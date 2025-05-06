@@ -36,7 +36,7 @@ export default function MobileMenu({
   return (
     <>
       {/* Mobile Burger Menu Button */}
-      <div className="fixed top-4 right-4 z-50 md:hidden">
+      <div className="fixed top-4 right-4 z-[500] md:hidden">
         <button
           onClick={toggleMobileMenu}
           className="mobile-menu-button rounded-xl p-3 bg-white shadow-md text-gray-700 hover:bg-gray-100"
@@ -49,7 +49,7 @@ export default function MobileMenu({
       {/* Mobile Sidebar */}
       <div
         ref={mobileMenuRef}
-        className={`fixed inset-y-0 left-0 z-40 w-[70%] bg-white/90 backdrop-blur-sm shadow-xl transform transition-transform duration-300 ease-in-out md:hidden ${
+        className={`fixed inset-y-0 left-0 z-[500] w-[70%] bg-white/90 backdrop-blur-sm shadow-xl transform transition-transform duration-300 ease-in-out md:hidden ${
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -110,7 +110,7 @@ export default function MobileMenu({
       {/* Overlay when mobile menu is open */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          className="fixed inset-0 bg-black/50 z-[499] md:hidden"
           onClick={toggleMobileMenu}
         />
       )}
