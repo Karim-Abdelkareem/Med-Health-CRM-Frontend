@@ -182,6 +182,16 @@ const planService = {
     const response = await axios.get(`${API_URL}/hierarchy`);
     return response.data;
   },
+
+  markVisitIncomplete: async (planId, locationId, note) => {
+    const token = getAuthToken();
+    const response = await axios.put(
+      `${API_URL}/incomplete/${planId}/${locationId}`,
+      { note },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  },
 };
 
 export default planService;

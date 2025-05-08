@@ -119,6 +119,9 @@ const LocationNoteForm = ({ planId, locationId, onNoteSaved }) => {
 // Plan Region Card Component
 const PlanRegionCard = ({ region, onDataRefresh }) => {
   const [showNoteForm, setShowNoteForm] = useState(false);
+  const [showIncompleteModal, setShowIncompleteModal] = useState(false);
+  const [incompleteNote, setIncompleteNote] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Get the plan ID from the region or parent plan
   const planId =
@@ -161,6 +164,33 @@ const PlanRegionCard = ({ region, onDataRefresh }) => {
     !isNaN(longitude) &&
     (latitude !== 0 || longitude !== 0);
 
+  // Function to handle marking a visit as incomplete
+  const incompleteVisit = () => {
+    setShowIncompleteModal(true);
+  };
+
+  // Function to handle submitting the incomplete visit
+  const handleIncompleteSubmit = async () => {
+    if (!planId || !locationId) {
+      toast.error("Invalid plan or location data");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      await planService.markVisitIncomplete(planId, locationId, incompleteNote);
+      toast.success("Visit marked as incomplete");
+      setShowIncompleteModal(false);
+      setIncompleteNote("");
+      if (onDataRefresh) onDataRefresh();
+    } catch (error) {
+      console.error("Error marking visit as incomplete:", error);
+      toast.error("Failed to mark visit as incomplete");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="bg-white p-4 rounded-lg border border-gray-200 mb-4 hover:shadow-sm transition-shadow">
       <div className="flex justify-between items-start">
@@ -184,8 +214,84 @@ const PlanRegionCard = ({ region, onDataRefresh }) => {
               {status.charAt(0).toUpperCase() + status.slice(1)}
             </span>
           </p>
+          {status.toLowerCase() === "completed" && (
+            <button
+              onClick={() => {
+                incompleteVisit();
+              }}
+              className="bg-red-600 text-white my-3 px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700 cursor-pointer"
+            >
+              Incomplete Visit
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Incomplete Visit Modal */}
+      {showIncompleteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">
+                Mark Visit as Incomplete
+              </h2>
+              <button
+                onClick={() => setShowIncompleteModal(false)}
+                className="text-red-600"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-gray-700 mb-2">
+                You are about to mark the visit to{" "}
+                <strong>{locationName}</strong> as incomplete.
+              </p>
+              <p className="text-gray-700 mb-4">
+                Please provide a reason for marking this visit as incomplete:
+              </p>
+              <textarea
+                value={incompleteNote}
+                onChange={(e) => setIncompleteNote(e.target.value)}
+                className="w-full border rounded p-2"
+                rows="4"
+                placeholder="Enter reason for incomplete visit..."
+                required
+              />
+            </div>
+
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setShowIncompleteModal(false)}
+                className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleIncompleteSubmit}
+                disabled={!incompleteNote.trim() || isSubmitting}
+                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:opacity-50"
+              >
+                {isSubmitting ? "Submitting..." : "Mark as Incomplete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         {/* Map showing location's longitude and latitude */}
