@@ -6,10 +6,15 @@ import MainLayout from "../layouts/main/MainLayout";
 import Dashboard from "../pages/Dashboard";
 import CreatePlan from "../pages/Plan/CreatePlan";
 import ProtectedRoute from "../components/ProtectedRoute";
+import RoleBasedRoute from "../components/RoleBasedRoute";
 import MyPlans from "../pages/Plan/MyPlans";
 import UsersPlan from "../pages/UsersPlan/UsersPlan";
 import Location from "../pages/Location/Loaction";
 import CreateUser from "../pages/CreateUser/CreateUser";
+import Profile from "../pages/Profile/Profile";
+import History from "../pages/History/History";
+import LocationDetails from "../pages/LocationDetails/LocationDetails";
+import Notifications from "../pages/Notifications/Notifications";
 
 export default function AppRoutes() {
   return (
@@ -27,9 +32,55 @@ export default function AppRoutes() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/create-plans" element={<CreatePlan />} />
         <Route path="/my-plans" element={<MyPlans />} />
-        <Route path="/users-plans" element={<UsersPlan />} />
-        <Route path="add-location" element={<Location />} />
-        <Route path="/add-user" element={<CreateUser />} />
+        <Route
+          path="/users-plans"
+          element={
+            <RoleBasedRoute allowedRoles={["HR", "DM", "LM"]}>
+              <UsersPlan />
+            </RoleBasedRoute>
+          }
+        />
+        <Route
+          path="add-location"
+          element={
+            <RoleBasedRoute allowedRoles={["HR", "DM"]}>
+              <Location />
+            </RoleBasedRoute>
+          }
+        />
+        <Route
+          path="/add-user"
+          element={
+            <RoleBasedRoute allowedRoles={["HR"]}>
+              <CreateUser />
+            </RoleBasedRoute>
+          }
+        />
+        <Route path="/profile" element={<Profile />} />
+        <Route
+          path="/history"
+          element={
+            <RoleBasedRoute allowedRoles={["R"]}>
+              <History />
+            </RoleBasedRoute>
+          }
+        />
+        <Route
+          path="/location-details/:planId/:locationId"
+          element={
+            <RoleBasedRoute allowedRoles={["R"]}>
+              <LocationDetails />
+            </RoleBasedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <RoleBasedRoute allowedRoles={["R", "HR", "LM", "DM", "GM"]}>
+              <Notifications />
+            </RoleBasedRoute>
+          }
+        />
       </Route>
       <Route path="*" element={<div>Not Found</div>} />
     </Routes>

@@ -459,7 +459,6 @@ export default function UsersPlan() {
         endDate,
         selectedUser
       );
-      console.log(response.data);
       setPlansData(response.data);
     } catch (err) {
       console.error("Error fetching plans:", err);

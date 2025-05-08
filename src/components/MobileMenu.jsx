@@ -5,7 +5,6 @@ import { FiX, FiMenu } from "react-icons/fi";
 export default function MobileMenu({
   user,
   routes,
-  bgColor,
   isMobileMenuOpen,
   setIsMobileMenuOpen,
 }) {
@@ -59,7 +58,7 @@ export default function MobileMenu({
             <div className="p-4 flex items-center border-b border-gray-200 pb-6">
               <div
                 className="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold mr-4"
-                style={{ backgroundColor: bgColor }}
+                style={{ backgroundColor: "#000000" }}
               >
                 {user?.name?.charAt(0).toUpperCase() || "U"}
               </div>

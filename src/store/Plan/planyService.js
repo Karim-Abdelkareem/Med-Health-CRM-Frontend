@@ -160,6 +160,14 @@ const planService = {
     return response.data;
   },
 
+  getPlanById: async (id) => {
+    const token = getAuthToken();
+    const response = await axios.get(`${API_URL}/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  },
+
   filterPlans: async (query) => {
     const response = await axios.get(`${API_URL}/me/filter`, { params: query });
     return response.data;

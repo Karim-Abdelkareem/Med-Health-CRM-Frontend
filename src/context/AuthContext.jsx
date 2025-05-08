@@ -39,15 +39,28 @@ const AuthProvider = ({ children }) => {
     initialState
   );
 
+  // التحقق من صلاحية التوكن
+  const isTokenValid = (token) => {
+    try {
+      const decoded = jwtDecode(token);
+      const currentTime = Date.now() / 1000;
+      return decoded.exp > currentTime;
+    } catch {
+      return false;
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) {
+    if (token && isTokenValid(token)) {
       try {
         const user = jwtDecode(token);
         dispatch({ type: "LOGIN", payload: user });
       } catch (err) {
         localStorage.removeItem("token");
       }
+    } else {
+      localStorage.removeItem("token");
     }
     setCheckingAuth(false);
   }, []);
@@ -57,14 +70,18 @@ const AuthProvider = ({ children }) => {
       setLoading(true);
       const response = await axios.post(`${base_url}/api/auth/login`, data);
       const { access_token } = response.data.data;
+
+      if (!isTokenValid(access_token)) {
+        throw new Error("Invalid token received");
+      }
+
       localStorage.setItem("token", access_token);
       const user = jwtDecode(access_token);
       dispatch({ type: "LOGIN", payload: user });
       navigate("/");
     } catch (error) {
-      console.log(error);
-
-      setErrors(error.response.data.message);
+      console.error("Login error:", error);
+      setErrors(error.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
     }

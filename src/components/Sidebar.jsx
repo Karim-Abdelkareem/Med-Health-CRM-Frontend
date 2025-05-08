@@ -12,16 +12,18 @@ import {
 import { MdOutlineAddLocationAlt, MdOutlineEditCalendar } from "react-icons/md";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useNotifications } from "../context/NotificationsContext";
 import { BsListTask } from "react-icons/bs";
 import { HiOutlineUserAdd } from "react-icons/hi";
 import MobileMenu from "./MobileMenu";
+import { FaHistory } from "react-icons/fa";
 
 export default function Sidebar() {
   const { user } = useAuth();
+  const { unreadCount } = useNotifications();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
-  const [bgColor, setBgColor] = useState("#000000");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const dropdownRef = useRef(null);
@@ -33,11 +35,6 @@ export default function Sidebar() {
   const toggleUserDropdown = () => {
     setIsUserDropdownOpen(!isUserDropdownOpen);
   };
-
-  useEffect(() => {
-    const randomColor = "#" + Math.floor(Math.random() * 16777215).toString(16);
-    setBgColor(randomColor);
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -89,9 +86,15 @@ export default function Sidebar() {
       icon: <FiCalendar />,
     },
     {
-      path: "/settings",
-      name: "Settings",
-      icon: <FiSettings />,
+      path: "/history",
+      name: "History",
+      icon: <FaHistory />,
+    },
+    {
+      path: "/notifications",
+      name: "Notifications",
+      icon: <FiBell />,
+      badge: true,
     },
     {
       path: "/profile",
@@ -130,6 +133,12 @@ export default function Sidebar() {
       path: "/profile",
       name: "Profile",
       icon: <FiUser />,
+    },
+    {
+      path: "/notifications",
+      name: "Notifications",
+      icon: <FiBell />,
+      badge: true,
     },
   ];
 
@@ -178,6 +187,7 @@ export default function Sidebar() {
       path: "/notifications",
       name: "Notifications",
       icon: <FiBell />,
+      badge: true,
     },
   ];
 
@@ -200,7 +210,7 @@ export default function Sidebar() {
                 className={`h-8 w-8 ${
                   isSidebarOpen && "mr-4"
                 } rounded-full flex items-center justify-center text-white font-bold`}
-                style={{ backgroundColor: bgColor }}
+                style={{ backgroundColor: "#000000" }}
               >
                 {user?.name?.charAt(0).toUpperCase() || "U"}
               </div>
@@ -229,12 +239,12 @@ export default function Sidebar() {
           <div className="mb-6">
             {isUserDropdownOpen && (
               <div className="absolute left-2 max-w-60 right-0 mt-1 bg-white shadow-md rounded-md py-1 z-10 border border-gray-200">
-                <a href="#" className="block px-4 py-2 text-sm hover:bg-gray-100">
+                <Link
+                  to="/profile"
+                  className="block px-4 py-2 text-sm hover:bg-gray-100"
+                >
                   Profile
-                </a>
-                <a href="#" className="block px-4 py-2 text-sm hover:bg-gray-100">
-                  Settings
-                </a>
+                </Link>
                 <Link
                   to={"/login"}
                   className="block px-4 py-2 text-sm hover:bg-gray-100 text-red-500"
@@ -248,19 +258,25 @@ export default function Sidebar() {
           {/* Sidebar navigation */}
           <nav className="mt-6">
             <ul>
-              {routes.map((route) => (
-                <li key={route.path} className="mb-2">
+              {routes.map((route, index) => (
+                <li key={index} className="mb-2">
                   <Link
                     to={route.path}
-                    className={`flex ${
-                      isSidebarOpen ? "justify-start" : "justify-center"
-                    } items-center px-2 py-4 hover:bg-gray-200 rounded duration-200 transition-all`}
+                    className={`flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors ${
+                      window.location.pathname === route.path
+                        ? "bg-gray-200"
+                        : ""
+                    }`}
                   >
-                    {React.cloneElement(route.icon, {
-                      size: isSidebarOpen ? 20 : 24,
-                      className: "text-sm",
-                    })}
-                    {isSidebarOpen && <span className="ml-2">{route.name}</span>}
+                    <span className="text-xl">{route.icon}</span>
+                    {isSidebarOpen && (
+                      <span className="ml-3">{route.name}</span>
+                    )}
+                    {route.badge && unreadCount > 0 && (
+                      <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        {unreadCount}
+                      </span>
+                    )}
                   </Link>
                 </li>
               ))}
@@ -282,10 +298,9 @@ export default function Sidebar() {
       </div>
 
       {/* Mobile Menu Component */}
-      <MobileMenu 
+      <MobileMenu
         user={user}
         routes={routes}
-        bgColor={bgColor}
         isMobileMenuOpen={isMobileMenuOpen}
         setIsMobileMenuOpen={setIsMobileMenuOpen}
       />

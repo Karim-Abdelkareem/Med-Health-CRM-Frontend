@@ -159,7 +159,9 @@ const renderNoteSection = (title, notes) => (
                     {note.user?.name || "HR Member"}
                   </span>
                   <span className="text-sm text-gray-500">
-                    {note.createdAt ? new Date(note.createdAt).toLocaleString() : ""}
+                    {note.createdAt
+                      ? new Date(note.createdAt).toLocaleString()
+                      : ""}
                   </span>
                 </div>
                 {note.location && (
@@ -170,7 +172,9 @@ const renderNoteSection = (title, notes) => (
                       : "Unknown Location"}
                   </div>
                 )}
-                <p className="text-gray-700">{note.type || "No note content"}</p>
+                <p className="text-gray-700">
+                  {note.type || "No note content"}
+                </p>
               </div>
             ))}
           </div>
