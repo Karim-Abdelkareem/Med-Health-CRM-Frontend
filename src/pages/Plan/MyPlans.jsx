@@ -358,23 +358,25 @@ export default function MyPlans() {
                               {/* Mark as visited button */}
                               <div className="mt-3 flex items-center gap-3">
                                 {region.status?.toLowerCase().trim() ===
-                                  "incomplete" && (
-                                  <button
-                                    className="bg-green-100 text-green-700 text-sm px-3 py-1 rounded hover:bg-green-200 transition"
-                                    onClick={() => {
-                                      // Set state for future use
-                                      setSelectedPlanId(planToShow._id);
-                                      setSelectedRegionId(region._id);
-                                      // Pass IDs directly to the function
-                                      updateToVisited(
-                                        planToShow._id,
-                                        region._id
-                                      );
-                                    }}
-                                  >
-                                    Mark as Visited
-                                  </button>
-                                )}
+                                  "incomplete" &&
+                                  (!region.visitedLatitude ||
+                                    !region.visitedLongitude) && (
+                                    <button
+                                      className="bg-green-100 text-green-700 text-sm px-3 py-1 rounded hover:bg-green-200 transition"
+                                      onClick={() => {
+                                        // Set state for future use
+                                        setSelectedPlanId(planToShow._id);
+                                        setSelectedRegionId(region._id);
+                                        // Pass IDs directly to the function
+                                        updateToVisited(
+                                          planToShow._id,
+                                          region._id
+                                        );
+                                      }}
+                                    >
+                                      Mark as Visited
+                                    </button>
+                                  )}
                                 {region.status?.toLowerCase().trim() ===
                                   "completed" && (
                                   <button
