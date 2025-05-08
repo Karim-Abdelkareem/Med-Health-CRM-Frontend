@@ -13,14 +13,14 @@ export default function DaliyPlan({
   // Helper function to get location name from ID
   const getLocationName = (plan, locationId) => {
     if (!plan || !plan.locations) return "Unknown Location";
-    
+
     const location = plan.locations.find(
-      loc => loc.location._id === locationId
+      (loc) => loc.location._id === locationId
     );
-    
+
     return location ? location.location.locationName : "Unknown Location";
   };
-  
+
   // Helper function to render note sections with special handling for HR notes
   const renderNoteSection = (title, notes, planToShow) => (
     <div key={title}>
@@ -42,7 +42,9 @@ export default function DaliyPlan({
                       {note.user?.name || "HR Member"}
                     </span>
                     <span className="text-sm text-gray-500">
-                      {note.createdAt ? new Date(note.createdAt).toLocaleString() : ""}
+                      {note.createdAt
+                        ? new Date(note.createdAt).toLocaleString()
+                        : ""}
                     </span>
                   </div>
                   {note.location && (
@@ -53,7 +55,9 @@ export default function DaliyPlan({
                         : "Unknown Location"}
                     </div>
                   )}
-                  <p className="text-gray-700">{note.type || "No note content"}</p>
+                  <p className="text-gray-700">
+                    {note.type || "No note content"}
+                  </p>
                 </div>
               ))}
             </div>
@@ -82,7 +86,7 @@ export default function DaliyPlan({
       </div>
     </div>
   );
-  
+
   return (
     <div>
       {" "}
@@ -196,30 +200,39 @@ export default function DaliyPlan({
 
                   <div className="space-y-6">
                     {/* General Notes */}
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                        <CgNotes size={20} />
-                        Notes
-                      </h3>
-                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        {planToShow.notes?.length > 0 ? (
+                    {planToShow.notes?.length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                          <CgNotes size={20} />
+                          Notes
+                        </h3>
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                           <div className="space-y-2">
                             {planToShow.notes.map((noteItem, idx) => (
-                              <div key={idx} className="p-3 bg-white rounded border border-gray-100">
+                              <div
+                                key={idx}
+                                className="p-3 bg-white rounded border border-gray-100"
+                              >
                                 <div className="border-b border-gray-100 pb-2 mb-2">
-                                  <h4 className="font-medium text-blue-700">Note #{idx + 1}</h4>
+                                  <h4 className="font-medium text-blue-700">
+                                    Note #{idx + 1}
+                                  </h4>
                                 </div>
-                                {typeof noteItem === 'string' ? (
+                                {typeof noteItem === "string" ? (
                                   <p>{noteItem}</p>
                                 ) : (
                                   <div>
                                     <div className="flex items-center gap-2 mb-1">
                                       <p className="text-gray-500">Location:</p>
                                       <p className="font-medium">
-                                        {noteItem.location?.locationName || 
-                                         (typeof noteItem.location === 'string' ? 
-                                          getLocationName(planToShow, noteItem.location) : 
-                                          noteItem.locationName || "Location")}
+                                        {noteItem.location?.locationName ||
+                                          (typeof noteItem.location === "string"
+                                            ? getLocationName(
+                                                planToShow,
+                                                noteItem.location
+                                              )
+                                            : noteItem.locationName ||
+                                              "Location")}
                                       </p>
                                     </div>
                                     <div className="flex items-start gap-2">
@@ -233,19 +246,35 @@ export default function DaliyPlan({
                               </div>
                             ))}
                           </div>
-                        ) : (
-                          <p className="text-gray-700 whitespace-pre-line">
-                            No notes added
-                          </p>
-                        )}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Use the renderNoteSection helper for all note types */}
-                    {renderNoteSection("GM Notes", planToShow.gmNotes, planToShow)}
-                    {renderNoteSection("DM Notes", planToShow.dmNotes, planToShow)}
-                    {renderNoteSection("LM Notes", planToShow.lmNotes, planToShow)}
-                    {renderNoteSection("HR Notes", planToShow.hrNotes, planToShow)}
+                    {planToShow.gmNotes?.length > 0 &&
+                      renderNoteSection(
+                        "GM Notes",
+                        planToShow.gmNotes,
+                        planToShow
+                      )}
+                    {planToShow.dmNotes?.length > 0 &&
+                      renderNoteSection(
+                        "DM Notes",
+                        planToShow.dmNotes,
+                        planToShow
+                      )}
+                    {planToShow.lmNotes?.length > 0 &&
+                      renderNoteSection(
+                        "LM Notes",
+                        planToShow.lmNotes,
+                        planToShow
+                      )}
+                    {planToShow.hrNotes?.length > 0 &&
+                      renderNoteSection(
+                        "HR Notes",
+                        planToShow.hrNotes,
+                        planToShow
+                      )}
                   </div>
                 </div>
               </div>

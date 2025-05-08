@@ -10,6 +10,7 @@ import monthlyService from "../../store/Monthly/monthlyService";
 import MonthlyPlan from "../../components/Representative/MonthlyPlan";
 import WeeklyPlan from "../../components/Representative/WeeklyPlan";
 import DaliyPlan from "../../components/Representative/DaliyPlan";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 export default function CreatePlan() {
   const [selectedPlan, setSelectedPlan] = useState("monthly");
@@ -20,6 +21,7 @@ export default function CreatePlan() {
   const [selectedPlanData, setSelectedPlanData] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [openWeeks, setOpenWeeks] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
 
   const plans = [
     { label: "Monthly Plan", value: "monthly" },
@@ -31,10 +33,14 @@ export default function CreatePlan() {
 
   const fetchPlanData = async () => {
     try {
+      setIsLoading(true);
       const response = await monthlyService.getCurrentMonthPlan();
       setPlanData(response.data);
     } catch (err) {
       console.log(err);
+      toast.error("Failed to fetch plan data");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -117,36 +123,44 @@ export default function CreatePlan() {
             Add Plan +
           </button>
         </div>
-        {selectedPlan === "monthly" && (
-          <MonthlyPlan
-            planData={planData}
-            selectedPlan={selectedPlan}
-            setIsViewModalOpen={setIsViewModalOpen}
-            setIsEditModalOpen={setIsEditModalOpen}
-            setIsDeleteModalOpen={setIsDeleteModalOpen}
-            setSelectedPlanId={setSelectedPlanId}
-            setSelectedPlanData={setSelectedPlanData}
-          />
-        )}
-        {selectedPlan === "weekly" && (
-          <WeeklyPlan
-            planData={planData}
-            openWeeks={openWeeks}
-            setOpenWeeks={setOpenWeeks}
-            setIsViewModalOpen={setIsViewModalOpen}
-            setIsEditModalOpen={setIsEditModalOpen}
-            setIsDeleteModalOpen={setIsDeleteModalOpen}
-            setSelectedPlanId={setSelectedPlanId}
-            setSelectedPlanData={setSelectedPlanData}
-          />
-        )}
-        {selectedPlan === "daily" && (
-          <DaliyPlan
-            planData={planData}
-            setIsViewModalOpen={setIsViewModalOpen}
-            setIsEditModalOpen={setIsEditModalOpen}
-            setSelectedPlanData={setSelectedPlanData}
-          />
+        {isLoading ? (
+          <div className="flex items-center justify-center h-40 bg-gray-50 rounded-lg">
+            <LoadingSpinner />
+          </div>
+        ) : (
+          <>
+            {selectedPlan === "monthly" && (
+              <MonthlyPlan
+                planData={planData}
+                selectedPlan={selectedPlan}
+                setIsViewModalOpen={setIsViewModalOpen}
+                setIsEditModalOpen={setIsEditModalOpen}
+                setIsDeleteModalOpen={setIsDeleteModalOpen}
+                setSelectedPlanId={setSelectedPlanId}
+                setSelectedPlanData={setSelectedPlanData}
+              />
+            )}
+            {selectedPlan === "weekly" && (
+              <WeeklyPlan
+                planData={planData}
+                openWeeks={openWeeks}
+                setOpenWeeks={setOpenWeeks}
+                setIsViewModalOpen={setIsViewModalOpen}
+                setIsEditModalOpen={setIsEditModalOpen}
+                setIsDeleteModalOpen={setIsDeleteModalOpen}
+                setSelectedPlanId={setSelectedPlanId}
+                setSelectedPlanData={setSelectedPlanData}
+              />
+            )}
+            {selectedPlan === "daily" && (
+              <DaliyPlan
+                planData={planData}
+                setIsViewModalOpen={setIsViewModalOpen}
+                setIsEditModalOpen={setIsEditModalOpen}
+                setSelectedPlanData={setSelectedPlanData}
+              />
+            )}
+          </>
         )}
       </div>
       {/* Create Plan Modal */}

@@ -8,9 +8,11 @@ import toast from "react-hot-toast";
 import monthlyService from "../../store/Monthly/monthlyService";
 import LocationMap from "../../components/Representative/PlanMap";
 import EditPlanModal from "../../components/EditPlanModal";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 export default function MyPlans() {
   const [planData, setplanData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [location, setLocation] = useState({
     visitedLatitude: null,
@@ -43,6 +45,7 @@ export default function MyPlans() {
 
   const fetchPlanData = async () => {
     try {
+      setIsLoading(true);
       const response = await monthlyService.getCurrentMonthPlan();
       setplanData(response.data);
 
@@ -71,6 +74,8 @@ export default function MyPlans() {
       }
     } catch (err) {
       toast.error(err.response?.data?.error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -230,7 +235,11 @@ export default function MyPlans() {
         </div>
 
         <div className="space-y-4">
-          {planData.plans?.length > 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center h-40 bg-gray-50 rounded-lg">
+              <LoadingSpinner />
+            </div>
+          ) : planData.plans?.length > 0 ? (
             (() => {
               // Find the current day's plan
               const today = new Date();

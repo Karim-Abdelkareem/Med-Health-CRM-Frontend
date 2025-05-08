@@ -12,6 +12,103 @@ export default function MonthlyPlan({ planData, selectedPlan }) {
     setSelectedDayIndex(index === selectedDayIndex ? null : index);
   };
 
+  // Helper function to render note sections with special handling for HR notes
+  const renderNoteSection = (title, notes) => {
+    // Only render if notes exist and have content
+    if (!notes || (Array.isArray(notes) && notes.length === 0)) {
+      return null;
+    }
+
+    return (
+      <div key={title}>
+        <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <CgNotes size={20} />
+          {title}
+        </h3>
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          {title === "HR Notes" && Array.isArray(notes) ? (
+            <div className="space-y-3">
+              {notes.map((note, idx) => (
+                <div
+                  key={idx}
+                  className="p-3 bg-blue-50 rounded-lg border border-blue-200"
+                >
+                  <div className="flex justify-between mb-2">
+                    <span className="font-medium text-blue-700">
+                      {note.user?.name || "HR Member"}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      {note.createdAt
+                        ? new Date(note.createdAt).toLocaleString()
+                        : ""}
+                    </span>
+                  </div>
+                  {note.location && (
+                    <div className="mb-2 text-sm text-gray-600">
+                      <span className="font-medium">Location:</span>{" "}
+                      {typeof note.location === "object"
+                        ? note.location.locationName
+                        : "Unknown Location"}
+                    </div>
+                  )}
+                  <p className="text-gray-700">
+                    {note.type || "No note content"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : Array.isArray(notes) ? (
+            <ul className="text-gray-700 whitespace-pre-line italic space-y-2">
+              {notes.map((note, idx) => (
+                <li key={idx}>
+                  {typeof note === "string" ? (
+                    `• ${note}`
+                  ) : note && typeof note === "object" ? (
+                    <div className="p-2 bg-white rounded border border-gray-100">
+                      {note.location && (
+                        <div className="mb-1 text-sm text-gray-600">
+                          <span className="font-medium">Location:</span>{" "}
+                          {typeof note.location === "string"
+                            ? note.location
+                            : note.location.locationName || "Unknown Location"}
+                        </div>
+                      )}
+                      <div>• {note.note || "No note content"}</div>
+                    </div>
+                  ) : (
+                    "• Invalid note format"
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : notes ? (
+            typeof notes === "string" ? (
+              <p className="text-gray-700 whitespace-pre-line">{notes}</p>
+            ) : typeof notes === "object" ? (
+              <div className="p-2 bg-white rounded border border-gray-100">
+                {notes.location && (
+                  <div className="mb-1 text-sm text-gray-600">
+                    <span className="font-medium">Location:</span>{" "}
+                    {typeof notes.location === "string"
+                      ? notes.location
+                      : notes.location.locationName || "Unknown Location"}
+                  </div>
+                )}
+                <div>{notes.note || "No note content"}</div>
+              </div>
+            ) : (
+              <p className="text-gray-700 whitespace-pre-line">
+                Invalid note format
+              </p>
+            )
+          ) : (
+            <p className="text-gray-700 whitespace-pre-line">No notes added</p>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Day selector grid */}
@@ -74,7 +171,6 @@ export default function MonthlyPlan({ planData, selectedPlan }) {
                   <IoLocationSharp size={20} />
                   Locations
                 </h3>
-                {console.log(planData.plans[selectedDayIndex])}
                 <div className="space-y-3">
                   {planData.plans[selectedDayIndex].locations.map(
                     (region, idx) => (
@@ -85,7 +181,7 @@ export default function MonthlyPlan({ planData, selectedPlan }) {
                         <div className="flex justify-between">
                           <div>
                             <h4 className="font-medium text-gray-800">
-                              Region {idx + 1}: {region.location.locationName}
+                              {region.location.locationName}
                             </h4>
                             <p className="text-sm text-gray-500 mt-1">
                               {region.location.address}
@@ -109,21 +205,79 @@ export default function MonthlyPlan({ planData, selectedPlan }) {
                 </div>
               </div>
 
-              {/* Notes */}
+              {/* Notes - Only render if they exist */}
               <div className="space-y-6">
-                {/* Notes */}
-                {renderNoteSection(
-                  "Notes",
-                  planData.plans[selectedDayIndex].notes
+                {/* General Notes */}
+                {planData.plans[selectedDayIndex].notes?.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                      <CgNotes size={20} />
+                      Notes
+                    </h3>
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      <div className="space-y-2">
+                        {planData.plans[selectedDayIndex].notes.map(
+                          (noteItem, idx) => (
+                            <div
+                              key={idx}
+                              className="p-3 bg-white rounded border border-gray-100"
+                            >
+                              <div className="border-b border-gray-100 pb-2 mb-2">
+                                <h4 className="font-medium text-blue-700">
+                                  Note #{idx + 1}
+                                </h4>
+                              </div>
+                              {typeof noteItem === "string" ? (
+                                <p>{noteItem}</p>
+                              ) : (
+                                <div>
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <p className="text-gray-500">Location:</p>
+                                    <p className="font-medium">
+                                      {noteItem.location?.locationName ||
+                                        (typeof noteItem.location === "string"
+                                          ? noteItem.location
+                                          : noteItem.locationName ||
+                                            "Location")}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-start gap-2">
+                                    <p className="text-gray-500">Note:</p>
+                                    <p className="text-gray-700 whitespace-pre-line">
+                                      {noteItem.note}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 )}
 
-                {/* GM, DM, LM, HR Notes */}
-                {["gmNotes", "dmNotes", "lmNotes", "hrNotes"].map((key) =>
+                {/* Specific note types - Only render if they exist */}
+                {planData.plans[selectedDayIndex].gmNotes?.length > 0 &&
                   renderNoteSection(
-                    key.toUpperCase().replace("NOTES", "") + " Notes",
-                    planData.plans[selectedDayIndex][key]
-                  )
-                )}
+                    "GM Notes",
+                    planData.plans[selectedDayIndex].gmNotes
+                  )}
+                {planData.plans[selectedDayIndex].dmNotes?.length > 0 &&
+                  renderNoteSection(
+                    "DM Notes",
+                    planData.plans[selectedDayIndex].dmNotes
+                  )}
+                {planData.plans[selectedDayIndex].lmNotes?.length > 0 &&
+                  renderNoteSection(
+                    "LM Notes",
+                    planData.plans[selectedDayIndex].lmNotes
+                  )}
+                {planData.plans[selectedDayIndex].hrNotes?.length > 0 &&
+                  renderNoteSection(
+                    "HR Notes",
+                    planData.plans[selectedDayIndex].hrNotes
+                  )}
               </div>
             </div>
           )}
@@ -138,107 +292,3 @@ export default function MonthlyPlan({ planData, selectedPlan }) {
     </div>
   );
 }
-
-const renderNoteSection = (title, notes) => (
-  <div>
-    <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-      <CgNotes size={20} />
-      {title}
-    </h3>
-    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-      {title === "HR Notes" && Array.isArray(notes) ? (
-        notes.length > 0 ? (
-          <div className="space-y-3">
-            {notes.map((note, idx) => (
-              <div
-                key={idx}
-                className="p-3 bg-blue-50 rounded-lg border border-blue-200"
-              >
-                <div className="flex justify-between mb-2">
-                  <span className="font-medium text-blue-700">
-                    {note.user?.name || "HR Member"}
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    {note.createdAt
-                      ? new Date(note.createdAt).toLocaleString()
-                      : ""}
-                  </span>
-                </div>
-                {note.location && (
-                  <div className="mb-2 text-sm text-gray-600">
-                    <span className="font-medium">Location:</span>{" "}
-                    {typeof note.location === "object"
-                      ? note.location.locationName
-                      : "Unknown Location"}
-                  </div>
-                )}
-                <p className="text-gray-700">
-                  {note.type || "No note content"}
-                </p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-700 whitespace-pre-line italic">
-            No HR notes added
-          </p>
-        )
-      ) : Array.isArray(notes) ? (
-        notes.length > 0 ? (
-          <div className="space-y-2">
-            {notes.map((note, idx) => (
-              <div
-                key={idx}
-                className="text-gray-700 whitespace-pre-line italic"
-              >
-                {typeof note === "string" ? (
-                  note
-                ) : note && typeof note === "object" ? (
-                  <div className="p-2 bg-white rounded border border-gray-100">
-                    {note.location && (
-                      <div className="mb-1 text-sm text-gray-600">
-                        <span className="font-medium">Location:</span>{" "}
-                        {typeof note.location === "string"
-                          ? note.location
-                          : note.location.locationName || "Unknown Location"}
-                      </div>
-                    )}
-                    <div>{note.note || "No note content"}</div>
-                  </div>
-                ) : (
-                  "Invalid note format"
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-700 whitespace-pre-line italic">
-            No notes added
-          </p>
-        )
-      ) : notes ? (
-        typeof notes === "string" ? (
-          <p className="text-gray-700 whitespace-pre-line">{notes}</p>
-        ) : typeof notes === "object" ? (
-          <div className="p-2 bg-white rounded border border-gray-100">
-            {notes.location && (
-              <div className="mb-1 text-sm text-gray-600">
-                <span className="font-medium">Location:</span>{" "}
-                {typeof notes.location === "string"
-                  ? notes.location
-                  : notes.location.locationName || "Unknown Location"}
-              </div>
-            )}
-            <div>{notes.note || "No note content"}</div>
-          </div>
-        ) : (
-          <p className="text-gray-700 whitespace-pre-line">
-            Invalid note format
-          </p>
-        )
-      ) : (
-        <p className="text-gray-700 whitespace-pre-line">No notes added</p>
-      )}
-    </div>
-  </div>
-);
