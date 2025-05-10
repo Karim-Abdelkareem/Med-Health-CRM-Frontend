@@ -35,7 +35,7 @@ export default function AppRoutes() {
         <Route
           path="/users-plans"
           element={
-            <RoleBasedRoute allowedRoles={["HR", "DM", "LM"]}>
+            <RoleBasedRoute allowedRoles={["HR","GM" ,"DM", "LM"]}>
               <UsersPlan />
             </RoleBasedRoute>
           }
@@ -43,7 +43,7 @@ export default function AppRoutes() {
         <Route
           path="add-location"
           element={
-            <RoleBasedRoute allowedRoles={["HR", "DM"]}>
+            <RoleBasedRoute allowedRoles={["HR", "DM","GM"]}>
               <Location />
             </RoleBasedRoute>
           }
@@ -51,7 +51,7 @@ export default function AppRoutes() {
         <Route
           path="/add-user"
           element={
-            <RoleBasedRoute allowedRoles={["HR"]}>
+            <RoleBasedRoute allowedRoles={["HR","GM"]}>
               <CreateUser />
             </RoleBasedRoute>
           }

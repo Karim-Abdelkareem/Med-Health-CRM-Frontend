@@ -110,19 +110,19 @@ export default function Sidebar() {
       icon: <FiHome />,
     },
     {
-      path: "/create-plans",
-      name: "Create Plan",
-      icon: <MdOutlineEditCalendar />,
-    },
-    {
-      path: "/my-plans",
-      name: "My Plans",
-      icon: <FiCalendar />,
-    },
-    {
       path: "/users-plans",
       name: "Users Plans",
       icon: <BsListTask />,
+    },
+    {
+      path: "/add-user",
+      name: "Add User",
+      icon: <HiOutlineUserAdd />,
+    },
+    {
+      path: "/add-location",
+      name: "Location",
+      icon: <MdOutlineAddLocationAlt />,
     },
     {
       path: "/settings",
@@ -147,16 +147,6 @@ export default function Sidebar() {
       path: "/",
       name: "Dashboard",
       icon: <FiHome />,
-    },
-    {
-      path: "/create-plans",
-      name: "Create Plan",
-      icon: <MdOutlineEditCalendar />,
-    },
-    {
-      path: "/my-plans",
-      name: "My Plans",
-      icon: <FiCalendar />,
     },
     {
       path: "/add-location",
