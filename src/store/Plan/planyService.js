@@ -64,8 +64,27 @@ const planService = {
     const response = await axios.put(
       `${API_URL}/complete/${id}/${locationId}`,
       {
-        visitedLatitude: data.visitedLatitude,
-        visitedLongitude: data.visitedLongitude,
+        startLatitude: data.startLatitude,
+        startLongitude: data.startLongitude,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response;
+  },
+
+  endVisitedRegion: async (id, locationId, data) => {
+    console.log(data);
+
+    const token = getAuthToken();
+    const response = await axios.put(
+      `${API_URL}/end-visit/${id}/${locationId}`,
+      {
+        endLatitude: data.endLatitude,
+        endLongitude: data.endLongitude,
       },
       {
         headers: {

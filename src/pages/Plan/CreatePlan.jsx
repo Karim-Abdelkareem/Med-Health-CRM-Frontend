@@ -23,6 +23,15 @@ export default function CreatePlan() {
   const [openWeeks, setOpenWeeks] = useState({});
   const [isLoading, setIsLoading] = useState(true);
 
+  // Function to check if it's the last 7 days of the month
+  const isLastWeekOfMonth = () => {
+    const today = new Date();
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const daysUntilEndOfMonth = lastDayOfMonth.getDate() - today.getDate();
+    
+    return daysUntilEndOfMonth <= 7;
+  };
+
   const plans = [
     { label: "Monthly Plan", value: "monthly" },
     { label: "Weekly Plan", value: "weekly" },
@@ -36,8 +45,8 @@ export default function CreatePlan() {
       setIsLoading(true);
       const response = await monthlyService.getCurrentMonthPlan();
       setPlanData(response.data);
-    } catch (err) {
-      console.log(err);
+    } catch (error) {
+      console.error("Failed to fetch plan data:", error);
       toast.error("Failed to fetch plan data");
     } finally {
       setIsLoading(false);
@@ -73,7 +82,7 @@ export default function CreatePlan() {
       toast.success("Plan deleted successfully");
       fetchPlanData();
     } catch (err) {
-      console.log(err);
+      console.error("Error deleting plan:", err);
     }
   };
 
@@ -84,7 +93,7 @@ export default function CreatePlan() {
       toast.success("Plan updated successfully");
       fetchPlanData();
     } catch (err) {
-      console.error("Update failed", err);
+      console.error("Error updating plan:", err);
     }
   };
 
@@ -115,10 +124,17 @@ export default function CreatePlan() {
           <h2 className="text-2xl font-semibold mb-4">Add Your Plan</h2>
           <button
             onClick={() => setIsOpen(true)}
-            disabled={planData.plans?.length > 0}
+            disabled={planData.plans?.length > 0 && !isLastWeekOfMonth()}
             className={`bg-blue-500 hover:bg-blue-600 text-white font-semibold mr-6 py-2 px-4 rounded ${
-              planData.plans?.length > 0 ? "opacity-50 cursor-not-allowed" : ""
+              planData.plans?.length > 0 && !isLastWeekOfMonth() 
+                ? "opacity-50 cursor-not-allowed" 
+                : ""
             }`}
+            title={
+              planData.plans?.length > 0 && !isLastWeekOfMonth()
+                ? "You can only add a new plan in the last 7 days of the month"
+                : "Add a new plan"
+            }
           >
             Add Plan +
           </button>

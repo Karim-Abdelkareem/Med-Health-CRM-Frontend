@@ -15,6 +15,8 @@ import Profile from "../pages/Profile/Profile";
 import History from "../pages/History/History";
 import LocationDetails from "../pages/LocationDetails/LocationDetails";
 import Notifications from "../pages/Notifications/Notifications";
+import UsersList from "../pages/UsersList/UsersList";
+import UserEdit from "../pages/UserEdit/UserEdit";
 
 export default function AppRoutes() {
   return (
@@ -56,6 +58,24 @@ export default function AppRoutes() {
             </RoleBasedRoute>
           }
         />
+        <Route
+          path="/users"
+          element={
+            <RoleBasedRoute allowedRoles={["HR", "GM"]}>
+              <UsersList />
+            </RoleBasedRoute>
+          }
+        />
+
+        <Route
+          path="/edit-user/:id"
+          element={
+            <RoleBasedRoute allowedRoles={["HR", "GM"]}>
+              <UserEdit />
+            </RoleBasedRoute>
+          }
+        />
+
         <Route path="/profile" element={<Profile />} />
         <Route
           path="/history"

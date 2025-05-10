@@ -181,10 +181,14 @@ export default function LocationDetails() {
                       Visit Date
                     </label>
                     <p className="mt-1 text-sm text-gray-900">
-                      {plan.visitDate
-                        ? format(new Date(plan.visitDate), "MM/dd/yyyy", {
-                            locale: enUS,
-                          })
+                      {locationData.startDate
+                        ? format(
+                            new Date(locationData.startDate),
+                            "MM/dd/yyyy",
+                            {
+                              locale: enUS,
+                            }
+                          )
                         : "N/A"}
                     </p>
                   </div>
@@ -204,29 +208,43 @@ export default function LocationDetails() {
                       {locationData.status}
                     </span>
                   </div>
-                  {locationData.visitedDate && (
+                  {locationData.startDate && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Actual Visit Date
                       </label>
                       <p className="mt-1 text-sm text-gray-900">
                         {format(
-                          new Date(locationData.visitedDate),
+                          new Date(locationData.startDate),
                           "MM/dd/yyyy hh:mm a",
                           { locale: enUS }
                         )}
                       </p>
                     </div>
                   )}
-                  {locationData.visitedLatitude &&
-                    locationData.visitedLongitude && (
+                  {locationData.endDate && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Actual End Visit Date
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {format(
+                          new Date(locationData.endDate),
+                          "MM/dd/yyyy hh:mm a",
+                          { locale: enUS }
+                        )}
+                      </p>
+                    </div>
+                  )}
+                  {locationData.startLatitude &&
+                    locationData.startLongitude && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700">
                           Visit Coordinates
                         </label>
                         <p className="mt-1 text-sm text-gray-900">
-                          Lat: {locationData.visitedLatitude}, Long:{" "}
-                          {locationData.visitedLongitude}
+                          Lat: {locationData.startLatitude}, Long:{" "}
+                          {locationData.startLongitude}
                         </p>
                       </div>
                     )}
@@ -273,45 +291,44 @@ export default function LocationDetails() {
                 </div>
 
                 {/* Visited Location Map */}
-                {locationData.visitedLatitude &&
-                  locationData.visitedLongitude && (
-                    <div className="bg-gray-50 p-6 rounded-lg">
-                      <h4 className="text-sm font-medium text-gray-700 mb-4">
-                        Actual Visit Location
-                      </h4>
-                      <div className="h-64 rounded-lg overflow-hidden">
-                        <MapContainer
-                          center={[
-                            locationData.visitedLatitude,
-                            locationData.visitedLongitude,
+                {locationData.endLatitude && locationData.endLongitude && (
+                  <div className="bg-gray-50 p-6 rounded-lg">
+                    <h4 className="text-sm font-medium text-gray-700 mb-4">
+                      Actual Visit Location
+                    </h4>
+                    <div className="h-64 rounded-lg overflow-hidden">
+                      <MapContainer
+                        center={[
+                          locationData.endLatitude,
+                          locationData.endLongitude,
+                        ]}
+                        zoom={13}
+                        style={{ height: "100%", width: "100%" }}
+                      >
+                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                        <Marker
+                          position={[
+                            locationData.endLatitude,
+                            locationData.endLongitude,
                           ]}
-                          zoom={13}
-                          style={{ height: "100%", width: "100%" }}
+                          icon={visitedIcon}
                         >
-                          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                          <Marker
-                            position={[
-                              locationData.visitedLatitude,
-                              locationData.visitedLongitude,
-                            ]}
-                            icon={visitedIcon}
-                          >
-                            <Popup>
-                              Visited Location
-                              <br />
-                              {format(
-                                new Date(locationData.visitedDate),
-                                "MM/dd/yyyy hh:mm a",
-                                {
-                                  locale: enUS,
-                                }
-                              )}
-                            </Popup>
-                          </Marker>
-                        </MapContainer>
-                      </div>
+                          <Popup>
+                            Visited Location
+                            <br />
+                            {format(
+                              new Date(locationData.endDate),
+                              "MM/dd/yyyy hh:mm a",
+                              {
+                                locale: enUS,
+                              }
+                            )}
+                          </Popup>
+                        </Marker>
+                      </MapContainer>
                     </div>
-                  )}
+                  </div>
+                )}
               </div>
             </div>
 

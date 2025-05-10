@@ -23,6 +23,8 @@ function reducer(state, action) {
       return { ...state, user: action.payload, isAuthenticated: true };
     case "LOGOUT":
       return { ...state, user: null, isAuthenticated: false };
+    case "UPDATE_USER":
+      return { ...state, user: { ...state.user, ...action.payload } };
     default:
       return state;
   }
@@ -93,6 +95,10 @@ const AuthProvider = ({ children }) => {
     navigate("/login");
   };
 
+  const updateUser = (userData) => {
+    dispatch({ type: "UPDATE_USER", payload: userData });
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -101,6 +107,7 @@ const AuthProvider = ({ children }) => {
         checkingAuth,
         login,
         logout,
+        updateUser,
         errors,
         loading,
       }}

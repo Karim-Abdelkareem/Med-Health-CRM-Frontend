@@ -15,11 +15,10 @@ export default function MyPlans() {
   const [isLoading, setIsLoading] = useState(true);
 
   const [location, setLocation] = useState({
-    visitedLatitude: null,
-    visitedLongitude: null,
+    startLatitude: null,
+    startLongitude: null,
   });
   const [error, setError] = useState(null);
-  const [currentDayPlanData, setCurrentDayPlanData] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedPlanData, setSelectedPlanData] = useState(null);
 
@@ -28,8 +27,8 @@ export default function MyPlans() {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setLocation({
-            visitedLatitude: position.coords.latitude,
-            visitedLongitude: position.coords.longitude,
+            startLatitude: position.coords.latitude,
+            startLongitude: position.coords.longitude,
           });
         },
         (err) => {
@@ -70,7 +69,7 @@ export default function MyPlans() {
 
         const planToShow =
           currentDayPlan || upcomingPlan || response.data.plans[0];
-        setCurrentDayPlanData(planToShow);
+        setSelectedPlanId(planToShow._id);
       }
     } catch (err) {
       toast.error(err.response?.data?.error.message);
@@ -99,6 +98,61 @@ export default function MyPlans() {
       }
 
       await planService.updateToVisited(planIdToUse, regionIdToUse, location);
+      toast.success("Plan updated successfully");
+      fetchPlanData();
+    } catch (err) {
+      console.error("Error updating plan:", err);
+      toast.error("Error updating plan");
+    }
+  };
+
+  const endVisit = async (planId, regionId) => {
+    try {
+      // Use the passed parameters instead of state values
+      const planIdToUse = planId || selectedPlanId;
+      const regionIdToUse = regionId || selectedRegionId;
+
+      // Validate IDs before making the API call
+      if (!planIdToUse || !regionIdToUse) {
+        toast.error("Invalid plan or location data");
+        return;
+      }
+
+      // Get current position as a Promise
+      const getCurrentPosition = () => {
+        return new Promise((resolve, reject) => {
+          if (!navigator.geolocation) {
+            setError("Geolocation is not supported by this browser.");
+            toast.error("Geolocation is not supported by this browser.");
+            reject(new Error("Geolocation not supported"));
+            return;
+          }
+
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              resolve({
+                endLatitude: position.coords.latitude,
+                endLongitude: position.coords.longitude,
+              });
+            },
+            (err) => {
+              setError(err.message);
+              toast.error(err.message);
+              reject(err);
+            }
+          );
+        });
+      };
+
+      // Wait for position data
+      const locationData = await getCurrentPosition();
+
+      // Make API call with the location data
+      await planService.endVisitedRegion(
+        planIdToUse,
+        regionIdToUse,
+        locationData
+      );
       toast.success("Plan updated successfully");
       fetchPlanData();
     } catch (err) {
@@ -151,7 +205,7 @@ export default function MyPlans() {
   };
 
   // Helper function to render note sections with special handling for HR notes
-  const renderNoteSection = (title, notes, planToShow) => (
+  const renderNoteSection = (title, notes) => (
     <div key={title}>
       <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
         <CgNotes size={20} />
@@ -355,12 +409,12 @@ export default function MyPlans() {
                                   </span>
                                 </div>
                               </div>
-                              {/* Mark as visited button */}
+                              {/* Start Visit button */}
                               <div className="mt-3 flex items-center gap-3">
                                 {region.status?.toLowerCase().trim() ===
                                   "incomplete" &&
-                                  (!region.visitedLatitude ||
-                                    !region.visitedLongitude) && (
+                                  (!region.startLatitude ||
+                                    !region.startLongitude) && (
                                     <button
                                       className="bg-green-100 text-green-700 text-sm px-3 py-1 rounded hover:bg-green-200 transition"
                                       onClick={() => {
@@ -374,7 +428,23 @@ export default function MyPlans() {
                                         );
                                       }}
                                     >
-                                      Mark as Visited
+                                      Start Visit
+                                    </button>
+                                  )}
+                                {region.status?.toLowerCase().trim() ===
+                                  "incomplete" &&
+                                  region.startDate && (
+                                    <button
+                                      className="bg-red-100 text-red-700 text-sm px-3 py-1 rounded hover:bg-red-200 transition"
+                                      onClick={() => {
+                                        // Set state for future use
+                                        setSelectedPlanId(planToShow._id);
+                                        setSelectedRegionId(region._id);
+                                        // Pass IDs directly to the function
+                                        endVisit(planToShow._id, region._id);
+                                      }}
+                                    >
+                                      End Visit
                                     </button>
                                   )}
                                 {region.status?.toLowerCase().trim() ===
@@ -459,26 +529,10 @@ export default function MyPlans() {
                       </div>
 
                       {/* Use the renderNoteSection helper for all note types */}
-                      {renderNoteSection(
-                        "gmNotes",
-                        planToShow.gmNotes,
-                        planToShow
-                      )}
-                      {renderNoteSection(
-                        "dmNotes",
-                        planToShow.dmNotes,
-                        planToShow
-                      )}
-                      {renderNoteSection(
-                        "lmNotes",
-                        planToShow.lmNotes,
-                        planToShow
-                      )}
-                      {renderNoteSection(
-                        "hrNotes",
-                        planToShow.hrNotes,
-                        planToShow
-                      )}
+                      {renderNoteSection("gmNotes", planToShow.gmNotes)}
+                      {renderNoteSection("dmNotes", planToShow.dmNotes)}
+                      {renderNoteSection("lmNotes", planToShow.lmNotes)}
+                      {renderNoteSection("hrNotes", planToShow.hrNotes)}
                     </div>
                   </div>
                 </div>

@@ -17,6 +17,7 @@ import { BsListTask } from "react-icons/bs";
 import { HiOutlineUserAdd } from "react-icons/hi";
 import MobileMenu from "./MobileMenu";
 import { FaHistory } from "react-icons/fa";
+import { IoPersonOutline } from "react-icons/io5";
 
 export default function Sidebar() {
   const { user } = useAuth();
@@ -149,16 +150,6 @@ export default function Sidebar() {
       icon: <FiHome />,
     },
     {
-      path: "/create-plans",
-      name: "Create Plan",
-      icon: <MdOutlineEditCalendar />,
-    },
-    {
-      path: "/my-plans",
-      name: "My Plans",
-      icon: <FiCalendar />,
-    },
-    {
       path: "/add-location",
       name: "Location",
       icon: <MdOutlineAddLocationAlt />,
@@ -174,9 +165,9 @@ export default function Sidebar() {
       icon: <HiOutlineUserAdd />,
     },
     {
-      path: "/settings",
-      name: "Settings",
-      icon: <FiSettings />,
+      path: "/users",
+      name: "Users List",
+      icon: <IoPersonOutline />,
     },
     {
       path: "/profile",

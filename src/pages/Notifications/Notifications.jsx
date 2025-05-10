@@ -142,16 +142,10 @@ export default function Notifications() {
   // Get notification icon based on type
   const getNotificationIcon = (type) => {
     switch (type) {
-      case "appointment":
-        return <FiCalendar className="w-5 h-5" />;
       case "plan_update":
         return <FiBell className="w-5 h-5" />;
-      case "payment":
-        return <FiDollarSign className="w-5 h-5" />;
       case "message":
         return <FiMessageSquare className="w-5 h-5" />;
-      case "alert":
-        return <FiAlertTriangle className="w-5 h-5" />;
       default:
         return <FiBell className="w-5 h-5" />;
     }
@@ -229,11 +223,8 @@ export default function Notifications() {
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">All Types</option>
-                  <option value="appointment">Appointments</option>
                   <option value="plan_update">Plan Updates</option>
-                  <option value="payment">Payments</option>
                   <option value="message">Messages</option>
-                  <option value="alert">Alerts</option>
                 </select>
 
                 <select

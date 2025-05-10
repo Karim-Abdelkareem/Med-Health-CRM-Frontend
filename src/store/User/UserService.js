@@ -18,6 +18,16 @@ const userService = {
     return response.data;
   },
 
+  getAllEmployee: async () => {
+    const token = getAuthToken();
+    const response = await axios.get(`${API_URL}/get/emp`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  },
+
   getUserById: async (id) => {
     const token = getAuthToken();
     const response = await axios.get(`${API_URL}/${id}`, {
@@ -75,8 +85,20 @@ const userService = {
         Authorization: `Bearer ${token}`,
       },
     });
-
     return response.data;
+  },
+  deactivateUser: async (userId) => {
+    const token = getAuthToken();
+    const response = await axios.patch(
+      `${API_URL}/deactivate/${userId}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response;
   },
 };
 

@@ -5,20 +5,49 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import { base_url } from "../../constants/axiosConfig";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import { FiUser, FiMail, FiUsers, FiMap, FiLock } from "react-icons/fi";
 import "react-datepicker/dist/react-datepicker.css";
 
 export default function Profile() {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const { user, updateUser } = useAuth();
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState(null);
+  const [profileChanged, setProfileChanged] = useState(false);
+  const [passwordChanged, setPasswordChanged] = useState(false);
+  const [originalData, setOriginalData] = useState(null);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm();
+  // Separate form instances for profile and password
+  const profileForm = useForm();
+  const passwordForm = useForm();
+
+  // Watch profile form values
+  const profileValues = profileForm.watch();
+
+  // Watch password form values
+  const passwordValues = passwordForm.watch();
+
+  // Check if profile form has changed
+  useEffect(() => {
+    if (originalData && profileValues) {
+      const hasNameChanged = originalData.name !== profileValues.name;
+      const hasEmailChanged = originalData.email !== profileValues.email;
+      
+      setProfileChanged(hasNameChanged || hasEmailChanged);
+    }
+  }, [profileValues, originalData]);
+
+  // Check if password form has changed
+  useEffect(() => {
+    if (passwordValues) {
+      const hasPasswordChanged = 
+        (passwordValues.currentPassword && passwordValues.currentPassword.trim() !== '') && 
+        (passwordValues.newPassword && passwordValues.newPassword.trim() !== '');
+      
+      setPasswordChanged(hasPasswordChanged);
+    }
+  }, [passwordValues]);
 
   useEffect(() => {
     fetchProfileData();
@@ -34,7 +63,8 @@ export default function Profile() {
         },
       });
       setProfileData(response.data.data);
-      reset(response.data.data);
+      setOriginalData(response.data.data);
+      profileForm.reset(response.data.data);
     } catch {
       toast.error("Failed to load profile data");
     } finally {
@@ -42,181 +72,335 @@ export default function Profile() {
     }
   };
 
-  const onSubmit = async (data) => {
+  const updateProfile = async (data) => {
     try {
-      setLoading(true);
+      setProfileLoading(true);
       const token = localStorage.getItem("token");
-      await axios.put(`${base_url}/api/users/profile`, data, {
+      
+      // Only send fields that have changed
+      const updatedData = {};
+      if (data.name !== originalData.name) updatedData.name = data.name;
+      if (data.email !== originalData.email) updatedData.email = data.email;
+      
+      const response = await axios.patch(`${base_url}/api/user/profile`, updatedData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+      
+      // Update user context with new data
+      if (response.data && response.data.data) {
+        updateUser({
+          name: data.name,
+          email: data.email,
+        });
+      }
+      
       toast.success("Profile updated successfully");
       fetchProfileData();
+      setProfileChanged(false);
     } catch (error) {
+      console.log(error);
       toast.error(error.response?.data?.message || "Failed to update profile");
     } finally {
-      setLoading(false);
+      setProfileLoading(false);
+    }
+  };
+
+  const changePassword = async (data) => {
+    try {
+      setPasswordLoading(true);
+      const token = localStorage.getItem("token");
+      
+      const passwordData = {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      };
+      
+      await axios.patch(`${base_url}/api/user/change-password`, passwordData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      toast.success("Password changed successfully");
+      
+      // Reset password fields
+      passwordForm.reset();
+      setPasswordChanged(false);
+    } catch (error) {
+      console.log(error);
+      toast.error(error.response?.data?.message || "Failed to change password");
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
   if (isLoading) {
     return (
-      <div className="h-full bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="bg-white rounded-lg shadow-md h-[calc(100vh-8rem)]">
-            <LoadingSpinner />
-          </div>
-        </div>
+      <div className="h-screen flex items-center justify-center">
+        <LoadingSpinner />
       </div>
     );
   }
 
   return (
-    <div className="h-full bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow-md">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-800">
-              Profile Information
-            </h2>
-          </div>
+    <div className="min-h-screen w-full">
+      <div className="max-w-6xl mx-auto px-6 py-12">
+        <div className="mb-10">
+          <h1 className="text-3xl font-bold text-gray-800">My Profile</h1>
+          <p className="text-gray-500 mt-1">Update your personal information and password</p>
+        </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Name Field */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  {...register("name", { required: "Name is required" })}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.name ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.name && (
-                  <span className="text-red-500 text-sm mt-1 block">
-                    {errors.name.message}
-                  </span>
+        {/* Personal Information Form */}
+        <form onSubmit={profileForm.handleSubmit(updateProfile)} className="mt-6">
+          <div className="space-y-12">
+            {/* Personal Information Section */}
+            <div>
+              <h2 className="text-xl font-semibold text-gray-700 mb-6">
+                Personal Information
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Only show name field if it exists in profile data */}
+                {(profileData?.name !== undefined) && (
+                  <div>
+                    <label className="flex items-center text-gray-700 font-medium mb-2">
+                      <FiUser className="mr-2" />
+                      Full Name <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      {...profileForm.register("name", { required: "Name is required" })}
+                      className={`w-full px-4 py-3 border-b-2 ${
+                        profileForm.formState.errors.name ? "border-red-500" : "border-gray-300"
+                      } focus:border-blue-500 focus:outline-none transition-colors bg-gray-50`}
+                      placeholder="Enter your full name"
+                    />
+                    {profileForm.formState.errors.name && (
+                      <span className="text-red-500 text-xs mt-1 block">
+                        {profileForm.formState.errors.name.message}
+                      </span>
+                    )}
+                  </div>
                 )}
-              </div>
 
-              {/* Email Field */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  {...register("email", {
-                    required: "Email is required",
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: "Invalid email address",
-                    },
-                  })}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.email ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.email && (
-                  <span className="text-red-500 text-sm mt-1 block">
-                    {errors.email.message}
-                  </span>
+                {/* Only show email field if it exists in profile data */}
+                {(profileData?.email !== undefined) && (
+                  <div>
+                    <label className="flex items-center text-gray-700 font-medium mb-2">
+                      <FiMail className="mr-2" />
+                      Email Address <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      {...profileForm.register("email", {
+                        required: "Email is required",
+                        pattern: {
+                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                          message: "Invalid email address",
+                        },
+                      })}
+                      className={`w-full px-4 py-3 border-b-2 ${
+                        profileForm.formState.errors.email ? "border-red-500" : "border-gray-300"
+                      } focus:border-blue-500 focus:outline-none transition-colors bg-gray-50`}
+                      placeholder="Enter your email address"
+                    />
+                    {profileForm.formState.errors.email && (
+                      <span className="text-red-500 text-xs mt-1 block">
+                        {profileForm.formState.errors.email.message}
+                      </span>
+                    )}
+                  </div>
                 )}
-              </div>
-
-              {/* Role Field (Read-only) */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Role
-                </label>
-                <input
-                  type="text"
-                  value={user?.role || ""}
-                  disabled
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
-                />
-              </div>
-
-              {/* Governate Field */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Governate
-                </label>
-                <input
-                  disabled
-                  type="text"
-                  {...register("governate")}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
-                />
               </div>
             </div>
 
+            {/* Account Information Section - Only show if role or governate exists */}
+            {(user?.role !== undefined || profileData?.governate !== undefined) && (
+              <div>
+                <h2 className="text-xl font-semibold text-gray-700 mb-6">
+                  Account Information
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Only show role field if it exists */}
+                  {(user?.role !== undefined) && (
+                    <div>
+                      <label className="flex items-center text-gray-700 font-medium mb-2">
+                        <FiUsers className="mr-2" />
+                        Role
+                      </label>
+                      <input
+                        type="text"
+                        value={user?.role || ""}
+                        disabled
+                        className="w-full px-4 py-3 border-b-2 border-gray-300 focus:outline-none bg-gray-100 text-gray-600"
+                      />
+                    </div>
+                  )}
+
+                  {/* Only show governate field if it exists */}
+                  {(profileData?.governate !== undefined) && (
+                    <div>
+                      <label className="flex items-center text-gray-700 font-medium mb-2">
+                        <FiMap className="mr-2" />
+                        Governate
+                      </label>
+                      <input
+                        disabled
+                        type="text"
+                        {...profileForm.register("governate")}
+                        className="w-full px-4 py-3 border-b-2 border-gray-300 focus:outline-none bg-gray-100 text-gray-600"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Profile Submit Button */}
+          <div className="mt-10 flex justify-end">
+            <button
+              type="submit"
+              disabled={profileLoading || !profileChanged}
+              className={`px-6 py-3 rounded-lg text-white font-medium transition-colors ${
+                profileLoading || !profileChanged
+                  ? "bg-blue-400 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }`}
+            >
+              {profileLoading ? (
+                <span className="flex items-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Saving...
+                </span>
+              ) : (
+                "Update Profile"
+              )}
+            </button>
+          </div>
+        </form>
+
+        {/* Password Change Form */}
+        <form onSubmit={passwordForm.handleSubmit(changePassword)} className="mt-16">
+          <div className="space-y-12">
             {/* Password Change Section */}
-            <div className="mt-8 pt-8 border-t border-gray-200">
-              <h3 className="text-xl font-semibold text-gray-800 mb-6">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-700 mb-6">
                 Change Password
-              </h3>
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Current Password
+                  <label className="flex items-center text-gray-700 font-medium mb-2">
+                    <FiLock className="mr-2" />
+                    Current Password <span className="text-red-500 ml-1">*</span>
                   </label>
                   <input
                     type="password"
-                    {...register("currentPassword")}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    {...passwordForm.register("currentPassword", { 
+                      required: "Current password is required to change password" 
+                    })}
+                    className={`w-full px-4 py-3 border-b-2 ${
+                      passwordForm.formState.errors.currentPassword ? "border-red-500" : "border-gray-300"
+                    } focus:border-blue-500 focus:outline-none transition-colors bg-gray-50`}
+                    placeholder="Enter current password"
                   />
+                  {passwordForm.formState.errors.currentPassword && (
+                    <span className="text-red-500 text-xs mt-1 block">
+                      {passwordForm.formState.errors.currentPassword.message}
+                    </span>
+                  )}
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    New Password
+                  <label className="flex items-center text-gray-700 font-medium mb-2">
+                    <FiLock className="mr-2" />
+                    New Password <span className="text-red-500 ml-1">*</span>
                   </label>
                   <input
                     type="password"
-                    {...register("newPassword", {
+                    {...passwordForm.register("newPassword", {
+                      required: "New password is required",
                       minLength: {
                         value: 6,
                         message: "Password must be at least 6 characters",
                       },
                     })}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.newPassword ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full px-4 py-3 border-b-2 ${
+                      passwordForm.formState.errors.newPassword ? "border-red-500" : "border-gray-300"
+                    } focus:border-blue-500 focus:outline-none transition-colors bg-gray-50`}
+                    placeholder="Enter new password"
                   />
-                  {errors.newPassword && (
-                    <span className="text-red-500 text-sm mt-1 block">
-                      {errors.newPassword.message}
+                  {passwordForm.formState.errors.newPassword && (
+                    <span className="text-red-500 text-xs mt-1 block">
+                      {passwordForm.formState.errors.newPassword.message}
                     </span>
                   )}
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Submit Button */}
-            <div className="mt-8 flex justify-end">
-              <button
-                type="submit"
-                disabled={loading}
-                className={`bg-blue-500 text-white px-8 py-3 rounded-lg hover:bg-blue-600 transition-colors font-medium ${
-                  loading ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-              >
-                {loading ? (
-                  <div className="flex items-center">
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    Saving...
-                  </div>
-                ) : (
-                  "Save Changes"
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
+          {/* Password Submit Button */}
+          <div className="mt-10 flex justify-end">
+            <button
+              type="submit"
+              disabled={passwordLoading || !passwordChanged}
+              className={`px-6 py-3 rounded-lg text-white font-medium transition-colors ${
+                passwordLoading || !passwordChanged
+                  ? "bg-blue-400 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }`}
+            >
+              {passwordLoading ? (
+                <span className="flex items-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Changing...
+                </span>
+              ) : (
+                "Change Password"
+              )}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

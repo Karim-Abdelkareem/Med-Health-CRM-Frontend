@@ -1,9 +1,13 @@
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 import React, { useEffect, useState } from "react";
 import userService from "../../store/User/UserService";
 import planService from "../../store/Plan/planyService";
 import { toast } from "react-hot-toast";
 import { CgNotes } from "react-icons/cg";
+import { format } from "date-fns";
+import { enUS } from "date-fns/locale";
 
 // Reusable Select Input Component
 const SelectInput = ({ id, label, value, onChange, options, placeholder }) => {
@@ -138,24 +142,6 @@ const PlanRegionCard = ({ region, onDataRefresh }) => {
     region.location?.longitude || region.longitude || 0
   );
 
-  // More robust handling of visitDate
-  let visitDate;
-  if (region.visitDate) {
-    visitDate = region.visitDate;
-  } else if (region.location?.visitDate) {
-    visitDate = region.location.visitDate;
-  } else if (region.plan?.visitDate) {
-    visitDate = region.plan.visitDate;
-  } else {
-    // Try to get visitDate from parent plan if available
-    const parentPlan = region._parentPlan || region.parentPlan;
-    if (parentPlan && parentPlan.visitDate) {
-      visitDate = parentPlan.visitDate;
-    } else {
-      visitDate = new Date().toISOString();
-    }
-  }
-
   const status = region.status || "incomplete";
 
   // Check if coordinates are valid
@@ -198,8 +184,24 @@ const PlanRegionCard = ({ region, onDataRefresh }) => {
           <h4 className="font-semibold text-gray-800">{locationName}</h4>
           <p className="text-gray-600 mt-1">
             <span className="font-semibold">Visit Date:</span>{" "}
-            {visitDate
-              ? new Date(visitDate).toLocaleDateString("en-GB")
+            {region.visitDate
+              ? new Date(region.visitDate).toLocaleDateString("en-GB")
+              : "Not scheduled"}
+          </p>
+          <p className="text-gray-600 mt-1">
+            <span className="font-semibold">Start Date:</span>{" "}
+            {region.startDate && !isNaN(new Date(region.startDate).getTime())
+              ? format(new Date(region.startDate), "dd/MM/yyyy hh:mm a", {
+                  locale: enUS,
+                })
+              : "Not scheduled"}
+          </p>
+          <p className="text-gray-600 mt-1">
+            <span className="font-semibold">End Date:</span>{" "}
+            {region.endDate && !isNaN(new Date(region.endDate).getTime())
+              ? format(new Date(region.endDate), "dd/MM/yyyy hh:mm a", {
+                  locale: enUS,
+                })
               : "Not scheduled"}
           </p>
           <p className="text-gray-600 mt-1">
@@ -297,7 +299,7 @@ const PlanRegionCard = ({ region, onDataRefresh }) => {
         {/* Map showing location's longitude and latitude */}
         {hasValidCoordinates ? (
           <div className="h-64 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-            <h5 className="font-semibold text-lg bg-gray-50 p-3 border-b">
+            <h5 className="font-semibold text-lg bg-gray-50 py-2 px-3 border-b">
               Location Map
             </h5>
             <MapContainer
@@ -340,27 +342,67 @@ const PlanRegionCard = ({ region, onDataRefresh }) => {
         {/* Conditional rendering of the visited map only if the status is 'completed' */}
         {status.toLowerCase() === "completed" ? (
           <div className="h-64 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-            <h5 className="font-semibold text-lg bg-gray-50 p-3 border-b">
-              Visited Location
+            <h5 className="font-semibold text-lg bg-gray-50 py-2 px-3 border-b">
+              Visited Locations
             </h5>
             <MapContainer
               center={[
-                parseFloat(region.visitedLatitude || latitude),
-                parseFloat(region.visitedLongitude || longitude),
+                parseFloat(region.endLatitude || latitude),
+                parseFloat(region.endLongitude || longitude),
               ]}
               zoom={13}
               scrollWheelZoom={false}
               style={{ height: "calc(100% - 42px)", width: "100%" }}
             >
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-              <Marker
-                position={[
-                  parseFloat(region.visitedLatitude || latitude),
-                  parseFloat(region.visitedLongitude || longitude),
-                ]}
-              >
-                <Popup>{`Visited Location: ${locationName}`}</Popup>
-              </Marker>
+
+              {/* Start location marker */}
+              {region.startLatitude && region.startLongitude && (
+                <Marker
+                  position={[
+                    parseFloat(region.startLatitude),
+                    parseFloat(region.startLongitude),
+                  ]}
+                  icon={
+                    new L.Icon({
+                      iconUrl:
+                        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+                      shadowUrl:
+                        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+                      iconSize: [25, 41],
+                      iconAnchor: [12, 41],
+                      popupAnchor: [1, -34],
+                      shadowSize: [41, 41],
+                    })
+                  }
+                >
+                  <Popup>{`Start Location: ${locationName}`}</Popup>
+                </Marker>
+              )}
+
+              {/* End location marker */}
+              {region.endLatitude && region.endLongitude && (
+                <Marker
+                  position={[
+                    parseFloat(region.endLatitude),
+                    parseFloat(region.endLongitude),
+                  ]}
+                  icon={
+                    new L.Icon({
+                      iconUrl:
+                        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
+                      shadowUrl:
+                        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+                      iconSize: [25, 41],
+                      iconAnchor: [12, 41],
+                      popupAnchor: [1, -34],
+                      shadowSize: [41, 41],
+                    })
+                  }
+                >
+                  <Popup>{`End Location: ${locationName}`}</Popup>
+                </Marker>
+              )}
             </MapContainer>
           </div>
         ) : (
@@ -527,8 +569,8 @@ export default function UsersPlan() {
 
   // Role options
   const roleOptions = [
-    { label: "HR", value: "HR" },
     { label: "Line Manager", value: "LM" },
+    { label: "Area Sales Manager", value: "Area" },
     { label: "District Manager", value: "DM" },
     { label: "Representative", value: "R" },
   ];

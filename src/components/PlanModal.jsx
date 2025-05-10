@@ -48,11 +48,6 @@ export default function PlanModal({
     setRegions(updated);
   };
 
-  // const addPlan = async (planData) => {
-  //   await planService.createPlan(planData);
-  //   fetchPlanData();
-  // };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     const planData = {
@@ -62,14 +57,13 @@ export default function PlanModal({
       notes,
     };
     createPlan(planData);
-    // addPlan(planData);
     toast.success("Plan created successfully");
 
-    // setIsOpen(false);
+    setIsOpen(false);
   };
 
   const [locationOptions, setLocationOptions] = useState([]);
-  //fetch locations
+
   const fetchLocations = async () => {
     try {
       const response = await locationService.getAllLocations();
@@ -85,10 +79,8 @@ export default function PlanModal({
     fetchLocations();
   }, []);
 
-  //Create plan
   const createPlan = async (planData) => {
-    const response = await monthlyService.createMonthlyPlan(planData);
-    console.log(response);
+    await monthlyService.createMonthlyPlan(planData);
     fetchPlanData();
   };
 
@@ -116,7 +108,7 @@ export default function PlanModal({
         <p className="font-bold text-gray-800 mb-4">
           Note:{" "}
           <span className="text-red-500 font-medium text-sm">
-            You Must Complete 10 Daily Task To Complete The KPI
+            You Must Complete 12 Daily Task To Complete The KPI
           </span>
         </p>
 
