@@ -17,7 +17,8 @@ import LocationDetails from "../pages/LocationDetails/LocationDetails";
 import Notifications from "../pages/Notifications/Notifications";
 import UsersList from "../pages/UsersList/UsersList";
 import UserEdit from "../pages/UserEdit/UserEdit";
-
+import PlanDetail from "../pages/PlanDetail/PlanDetail";
+import EditPlan from "../pages/EditPlan/EditPlan";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -39,6 +40,22 @@ export default function AppRoutes() {
           element={
             <RoleBasedRoute allowedRoles={["HR", "DM", "LM"]}>
               <UsersPlan />
+            </RoleBasedRoute>
+          }
+        />
+        <Route
+          path="/plan-detail/:id"
+          element={
+            <RoleBasedRoute allowedRoles={["GM", "HR", "LM", "Area", "DM"]}>
+              <PlanDetail />
+            </RoleBasedRoute>
+          }
+        />
+        <Route
+          path="/plan/edit/:id"
+          element={
+            <RoleBasedRoute allowedRoles={["GM", "HR"]}>
+              <EditPlan />
             </RoleBasedRoute>
           }
         />
