@@ -68,6 +68,9 @@ export default function Sidebar() {
       case "Area":
         setRoutes(AreaRoutes);
         break;
+      case "LM":
+        setRoutes(LMRoutes);
+        break;
       default:
         break;
     }
@@ -224,6 +227,39 @@ export default function Sidebar() {
     },
   ];
 
+  const LMRoutes = [
+    {
+      path: "/",
+      name: "Dashboard",
+      icon: <FiHome />,
+    },
+    {
+      path: "/team-plans",
+      name: "Team Plans",
+      icon: <BsListTask />,
+    },
+    {
+      path: "/add-task",
+      name: "Add Task",
+      icon: <HiOutlineUserAdd />,
+    },
+    {
+      path: "/reports",
+      name: "Reports",
+      icon: <FaHistory />,
+    },
+    {
+      path: "/profile",
+      name: "Profile",
+      icon: <FiUser />,
+    },
+    {
+      path: "/notifications",
+      name: "Notifications",
+      icon: <FiBell />,
+      badge: true,
+    },
+  ];
   return (
     <>
       {/* Desktop Sidebar */}
