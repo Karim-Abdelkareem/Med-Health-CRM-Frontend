@@ -40,6 +40,8 @@ const planService = {
   },
 
   updatePlan: async (id, updatedData) => {
+    console.log(id, updatedData);
+
     const token = getAuthToken();
     const response = await axios.put(`${API_URL}/${id}`, updatedData, {
       headers: {

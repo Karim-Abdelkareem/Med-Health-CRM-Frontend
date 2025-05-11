@@ -4,10 +4,12 @@ import { toast } from "react-hot-toast";
 import userService from "../../store/User/UserService";
 import { FiUser, FiMail, FiUsers, FiMap, FiArrowLeft } from "react-icons/fi";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import { useAuth } from "../../context/AuthContext";
 
 export default function UserEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -17,6 +19,7 @@ export default function UserEdit() {
     governate: "",
     LM: "",
     DM: "",
+    Area: "",
   });
 
   // UI state
@@ -27,6 +30,7 @@ export default function UserEdit() {
   // Lists for dropdowns
   const [lineManagers, setLineManagers] = useState([]);
   const [districtManagers, setDistrictManagers] = useState([]);
+  const [areaManagers, setAreaManagers] = useState([]);
 
   // Governate options
   const governates = [
@@ -40,14 +44,37 @@ export default function UserEdit() {
     { value: "Aswan", label: "Aswan" },
   ];
 
+  // Define role hierarchy (higher index = higher permission)
+  const roleHierarchy = ["R", "DM", "Area", "LM", "HR", "GM"];
+
+  // Filter role options based on logged-in user's role
+  const getFilteredRoleOptions = () => {
+    const userRoleIndex = roleHierarchy.indexOf(user?.role);
+    
+    // Define all possible role options
+    const allRoleOptions = [
+      { value: "R", label: "Representative" },
+      { value: "DM", label: "District Manager" },
+      { value: "Area", label: "Area Sales Manager" },
+      { value: "LM", label: "Line Manager" },
+      { value: "HR", label: "HR" },
+      { value: "GM", label: "General Manager" },
+    ];
+    
+    // If user is GM or HR, show all roles
+    if (user?.role === "GM" || user?.role === "HR") {
+      return allRoleOptions;
+    }
+    
+    // Otherwise, filter roles based on hierarchy
+    return allRoleOptions.filter(role => {
+      const roleIndex = roleHierarchy.indexOf(role.value);
+      return roleIndex < userRoleIndex; // Only show roles with lower permission level
+    });
+  };
+
   // Role options
-  const roleOptions = [
-    { value: "R", label: "Representative" },
-    { value: "LM", label: "Line Manager" },
-    { value: "DM", label: "District Manager" },
-    { value: "GM", label: "General Manager" },
-    { value: "HR", label: "HR" },
-  ];
+  const roleOptions = getFilteredRoleOptions();
 
   // Fetch user data
   useEffect(() => {
@@ -64,6 +91,7 @@ export default function UserEdit() {
           governate: userData.governate || "",
           LM: userData.LM?._id || userData.LM || "",
           DM: userData.DM?._id || userData.DM || "",
+          Area: userData.Area?._id || userData.Area || "",
         });
       } catch (error) {
         toast.error("Failed to fetch user data");
@@ -89,6 +117,10 @@ export default function UserEdit() {
         // Fetch line managers
         const lmResponse = await userService.getUsersByRole("LM");
         setLineManagers(lmResponse.data || []);
+
+        // Fetch area managers
+        const areaResponse = await userService.getUsersByRole("Area");
+        setAreaManagers(areaResponse.data || []);
       } catch (error) {
         console.error("Error fetching managers:", error);
       }
@@ -105,11 +137,13 @@ export default function UserEdit() {
     const isValid = name.trim() !== "" && email.trim() !== "" && role !== "";
 
     // Additional validation for specific roles
-    if (role === "R" && (!formData.LM || !formData.governate)) {
+    if (role === "R" && (!formData.LM || !formData.governate || !formData.Area || !formData.DM)) {
+      setIsFormValid(false);
+    } else if (role === "DM" && (!formData.LM || !formData.Area || !formData.governate)) {
       setIsFormValid(false);
     } else if (role === "LM" && !formData.governate) {
       setIsFormValid(false);
-    } else if (role === "DM" && !formData.governate) {
+    } else if (role === "Area" && !formData.LM) {
       setIsFormValid(false);
     } else {
       setIsFormValid(isValid);
@@ -124,11 +158,18 @@ export default function UserEdit() {
     if (name === "role") {
       const updatedData = { ...formData, [name]: value };
 
-      if (value !== "R") {
+      // Reset fields based on role
+      if (value !== "R" && value !== "DM") {
         updatedData.LM = "";
+        updatedData.Area = "";
       }
 
-      if (value !== "R" && value !== "LM" && value !== "DM") {
+      if (value !== "R") {
+        updatedData.DM = "";
+      }
+
+      // Reset governate for roles that don't need it
+      if (value !== "R" && value !== "LM" && value !== "DM" && value !== "Area") {
         updatedData.governate = "";
       }
 
@@ -154,9 +195,17 @@ export default function UserEdit() {
     // Add role-specific fields
     if (formData.role === "R") {
       userData.LM = formData.LM;
+      userData.Area = formData.Area;
+      userData.DM = formData.DM;
       userData.governate = formData.governate;
-    } else if (formData.role === "LM" || formData.role === "DM") {
+    } else if (formData.role === "DM") {
+      userData.LM = formData.LM;
+      userData.Area = formData.Area;
       userData.governate = formData.governate;
+    } else if (formData.role === "LM") {
+      userData.governate = formData.governate;
+    } else if (formData.role === "Area") {
+      userData.LM = formData.LM;
     }
 
     try {
@@ -270,7 +319,8 @@ export default function UserEdit() {
                 {/* Conditional Fields Based on Role */}
                 {(formData.role === "R" ||
                   formData.role === "LM" ||
-                  formData.role === "DM") && (
+                  formData.role === "DM" ||
+                  formData.role === "Area") && (
                   <div>
                     <label className="flex items-center text-gray-700 font-medium mb-2">
                       <FiMap className="mr-2" />
@@ -294,7 +344,8 @@ export default function UserEdit() {
                 )}
               </div>
 
-              {formData.role === "R" && (
+              {/* Line Manager field */}
+              {(formData.role === "R" || formData.role === "DM" || formData.role === "Area") && (
                 <div className="mt-8">
                   <label className="flex items-center text-gray-700 font-medium mb-2">
                     <FiUsers className="mr-2" />
@@ -311,6 +362,54 @@ export default function UserEdit() {
                     {lineManagers.map((lm) => (
                       <option key={lm._id} value={lm._id}>
                         {lm.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Area Manager field */}
+              {(formData.role === "R" || formData.role === "DM") && (
+                <div className="mt-8">
+                  <label className="flex items-center text-gray-700 font-medium mb-2">
+                    <FiUsers className="mr-2" />
+                    Area Manager <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <select
+                    name="Area"
+                    value={formData.Area}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none transition-colors bg-gray-50 appearance-none"
+                    required
+                  >
+                    <option value="">Select area manager</option>
+                    {areaManagers.map((area) => (
+                      <option key={area._id} value={area._id}>
+                        {area.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* District Manager field */}
+              {formData.role === "R" && (
+                <div className="mt-8">
+                  <label className="flex items-center text-gray-700 font-medium mb-2">
+                    <FiUsers className="mr-2" />
+                    District Manager <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <select
+                    name="DM"
+                    value={formData.DM}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none transition-colors bg-gray-50 appearance-none"
+                    required
+                  >
+                    <option value="">Select district manager</option>
+                    {districtManagers.map((dm) => (
+                      <option key={dm._id} value={dm._id}>
+                        {dm.name}
                       </option>
                     ))}
                   </select>

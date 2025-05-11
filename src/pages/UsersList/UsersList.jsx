@@ -3,6 +3,7 @@ import userService from "../../store/User/UserService";
 import { FiEdit, FiUserX, FiUserCheck } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 export default function UsersList() {
   const [users, setUsers] = useState([]);
@@ -12,12 +13,36 @@ export default function UsersList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all"); // "all", "active", "inactive"
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Define role hierarchy (higher index = higher permission)
+  const roleHierarchy = ["R", "DM", "Area", "LM", "HR", "GM"];
+
+  // Add a function to filter users based on role hierarchy
+  const filterUsersByRole = (users) => {
+    if (!user) return [];
+    
+    const userRoleIndex = roleHierarchy.indexOf(user.role);
+    
+    // If user is GM or HR, show all users
+    if (user.role === "GM" || user.role === "HR") {
+      return users;
+    }
+    
+    // Otherwise, filter users based on hierarchy
+    return users.filter(u => {
+      const roleIndex = roleHierarchy.indexOf(u.role);
+      return roleIndex < userRoleIndex; // Only show users with lower permission level
+    });
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const response = await userService.getAllEmployee();
-      setUsers(response.data || []);
+      // Filter users based on role hierarchy
+      const filteredUsers = filterUsersByRole(response.data);
+      setUsers(filteredUsers);
     } catch (error) {
       toast.error("Failed to fetch users");
       console.error(error);
