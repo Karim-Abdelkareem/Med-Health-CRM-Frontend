@@ -31,6 +31,8 @@ import { Doughnut, Line, Bar } from "react-chartjs-2";
 import userService from "../../store/User/UserService";
 import holidayService from "../../store/Holidays/HolidaysService";
 import planService from "../../store/Plan/planyService";
+import axios from "axios";
+import { base_url } from "../../constants/axiosConfig";
 
 // Register ChartJS components
 ChartJS.register(
@@ -57,7 +59,6 @@ export default function UserDetail() {
   const [activeTab, setActiveTab] = useState("overview");
   const [currentNotesPage, setCurrentNotesPage] = useState(1);
   const [currentPlansPage, setCurrentPlansPage] = useState(1);
-  const [currentHolidaysPage, setCurrentHolidaysPage] = useState(1);
   const itemsPerPage = 12;
 
   // Pagination helpers
@@ -87,15 +88,16 @@ export default function UserDetail() {
 
         setPlans(plansResponse.data || []);
 
-        // Mock KPI data (replace with actual API call when available)
-        setKpis([
-          { month: "Jan", target: 85, achieved: 78 },
-          { month: "Feb", target: 85, achieved: 82 },
-          { month: "Mar", target: 85, achieved: 87 },
-          { month: "Apr", target: 90, achieved: 84 },
-          { month: "May", target: 90, achieved: 91 },
-          { month: "Jun", target: 90, achieved: 88 },
-        ]);
+        // Fetch user KPIs
+        const kpisResponse = await axios.get(
+          `${base_url}/api/users/monthly-kpi-stats/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        setKpis(kpisResponse.data.data || []);
       } catch (error) {
         console.error("Error fetching user data:", error);
         toast.error("Failed to load user data");
@@ -386,39 +388,73 @@ export default function UserDetail() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <FiTarget className="mr-2 text-blue-500" /> Performance
                   </h3>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-gray-600">Average KPI</span>
-                    <span className="text-lg font-semibold">
-                      {Math.round(
-                        kpis.reduce((sum, kpi) => sum + kpi.achieved, 0) /
-                          kpis.length
-                      )}
-                      %
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-gray-600">Target</span>
-                    <span className="text-lg font-semibold">
-                      {Math.round(
-                        kpis.reduce((sum, kpi) => sum + kpi.target, 0) /
-                          kpis.length
-                      )}
-                      %
-                    </span>
-                  </div>
-                  <div className="mt-4">
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div
-                        className="bg-blue-600 h-2.5 rounded-full"
-                        style={{
-                          width: `${Math.round(
-                            kpis.reduce((sum, kpi) => sum + kpi.achieved, 0) /
-                              kpis.length
-                          )}%`,
-                        }}
-                      ></div>
-                    </div>
-                  </div>
+                  {/* Get current month KPI */}
+                  {(() => {
+                    const currentMonth = new Date().toLocaleString("default", {
+                      month: "short",
+                    });
+                    const currentMonthKpi = kpis.find(
+                      (kpi) => kpi.month === currentMonth
+                    );
+
+                    if (currentMonthKpi) {
+                      return (
+                        <>
+                          <div className="flex items-center justify-between mb-4">
+                            <span className="text-gray-600">
+                              Current Month ({currentMonthKpi.month})
+                            </span>
+                            <span className="text-lg font-semibold">
+                              {currentMonthKpi.achieved}%
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between mb-4">
+                            <span className="text-gray-600">Target</span>
+                            <span className="text-lg font-semibold">
+                              {currentMonthKpi.target}%
+                            </span>
+                          </div>
+                          <div className="mt-4">
+                            <div className="w-full bg-gray-200 rounded-full h-2.5">
+                              <div
+                                className="bg-blue-600 h-2.5 rounded-full"
+                                style={{
+                                  width: `${currentMonthKpi.achieved}%`,
+                                }}
+                              ></div>
+                            </div>
+                          </div>
+                          <div className="mt-4 text-center">
+                            <span
+                              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                currentMonthKpi.achieved >=
+                                currentMonthKpi.target
+                                  ? "bg-green-100 text-green-800"
+                                  : currentMonthKpi.achieved >=
+                                    currentMonthKpi.target * 0.9
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
+                            >
+                              {currentMonthKpi.achieved >=
+                              currentMonthKpi.target
+                                ? "Exceeded"
+                                : currentMonthKpi.achieved >=
+                                  currentMonthKpi.target * 0.9
+                                ? "Near Target"
+                                : "Below Target"}
+                            </span>
+                          </div>
+                        </>
+                      );
+                    } else {
+                      return (
+                        <div className="text-center py-4 text-gray-500">
+                          No KPI data available for current month.
+                        </div>
+                      );
+                    }
+                  })()}
                 </div>
 
                 {/* Holiday Summary */}
