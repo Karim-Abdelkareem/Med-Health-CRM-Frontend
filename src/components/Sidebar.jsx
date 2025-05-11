@@ -192,9 +192,9 @@ export default function Sidebar() {
       icon: <FiHome />,
     },
     {
-      path: "/team-plans",
-      name: "Team Plans",
-      icon: <BsListTask />,
+      path: "/users",
+      name: "Users Plan",
+      icon: <IoPersonOutline />,
     },
     {
       path: "/add-task",
