@@ -234,19 +234,19 @@ export default function Sidebar() {
       icon: <FiHome />,
     },
     {
-      path: "/users",
-      name: "Users Plan",
-      icon: <IoPersonOutline />,
+      path: "/create-plans",
+      name: "Create Plan",
+      icon: <MdOutlineEditCalendar />,
     },
     {
-      path: "/add-task",
-      name: "Add Task",
-      icon: <HiOutlineUserAdd />,
+      path: "/my-plans",
+      name: "My Plans",
+      icon: <FiCalendar />,
     },
     {
-      path: "/reports",
-      name: "Reports",
-      icon: <FaHistory />,
+      path: "/users-plans",
+      name: "Users Plans",
+      icon: <BsListTask />,
     },
     {
       path: "/profile",
