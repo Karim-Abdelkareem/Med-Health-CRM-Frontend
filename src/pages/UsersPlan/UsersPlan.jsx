@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import userService from "../../store/User/UserService";
 import planService from "../../store/Plan/planyService";
+import { useAuth } from "../../context/AuthContext";
 
 // Reusable Select Input Component
 const SelectInput = ({ id, label, value, onChange, options, placeholder }) => {
@@ -181,13 +182,36 @@ export default function UsersPlan() {
   const [plansData, setPlansData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Role options
-  const roleOptions = [
-    { label: "Line Manager", value: "LM" },
-    { label: "Area Sales Manager", value: "Area" },
-    { label: "District Manager", value: "DM" },
-    { label: "Representative", value: "R" },
-  ];
+  const { user } = useAuth();
+
+  // Define role hierarchy (higher index = higher permission)
+  const roleHierarchy = ["R", "DM", "Area", "LM", "HR", "GM"];
+
+  // Filter role options based on logged-in user's role
+  const getFilteredRoleOptions = () => {
+    const userRoleIndex = roleHierarchy.indexOf(user?.role);
+
+    // Define all possible role options
+    const allRoleOptions = [
+      { label: "Line Manager", value: "LM" },
+      { label: "Area Sales Manager", value: "Area" },
+      { label: "District Manager", value: "DM" },
+      { label: "Representative", value: "R" },
+    ];
+
+    // If user is GM or HR, show all roles
+    if (user?.role === "GM" || user?.role === "HR") {
+      return allRoleOptions;
+    }
+
+    // Otherwise, filter roles based on hierarchy
+    return allRoleOptions.filter((role) => {
+      const roleIndex = roleHierarchy.indexOf(role.value);
+      return roleIndex < userRoleIndex; // Only show roles with lower permission level
+    });
+  };
+
+  const roleOptions = getFilteredRoleOptions();
 
   // Fetch users based on role
   const fetchUsersByRole = async () => {

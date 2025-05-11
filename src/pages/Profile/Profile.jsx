@@ -33,7 +33,7 @@ export default function Profile() {
     if (originalData && profileValues) {
       const hasNameChanged = originalData.name !== profileValues.name;
       const hasEmailChanged = originalData.email !== profileValues.email;
-      
+
       setProfileChanged(hasNameChanged || hasEmailChanged);
     }
   }, [profileValues, originalData]);
@@ -41,10 +41,12 @@ export default function Profile() {
   // Check if password form has changed
   useEffect(() => {
     if (passwordValues) {
-      const hasPasswordChanged = 
-        (passwordValues.currentPassword && passwordValues.currentPassword.trim() !== '') && 
-        (passwordValues.newPassword && passwordValues.newPassword.trim() !== '');
-      
+      const hasPasswordChanged =
+        passwordValues.currentPassword &&
+        passwordValues.currentPassword.trim() !== "" &&
+        passwordValues.newPassword &&
+        passwordValues.newPassword.trim() !== "";
+
       setPasswordChanged(hasPasswordChanged);
     }
   }, [passwordValues]);
@@ -62,6 +64,8 @@ export default function Profile() {
           Authorization: `Bearer ${token}`,
         },
       });
+      console.log(response.data.data);
+
       setProfileData(response.data.data);
       setOriginalData(response.data.data);
       profileForm.reset(response.data.data);
@@ -76,18 +80,22 @@ export default function Profile() {
     try {
       setProfileLoading(true);
       const token = localStorage.getItem("token");
-      
+
       // Only send fields that have changed
       const updatedData = {};
       if (data.name !== originalData.name) updatedData.name = data.name;
       if (data.email !== originalData.email) updatedData.email = data.email;
-      
-      const response = await axios.patch(`${base_url}/api/user/profile`, updatedData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      
+
+      const response = await axios.patch(
+        `${base_url}/api/user/profile`,
+        updatedData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       // Update user context with new data
       if (response.data && response.data.data) {
         updateUser({
@@ -95,7 +103,7 @@ export default function Profile() {
           email: data.email,
         });
       }
-      
+
       toast.success("Profile updated successfully");
       fetchProfileData();
       setProfileChanged(false);
@@ -111,20 +119,20 @@ export default function Profile() {
     try {
       setPasswordLoading(true);
       const token = localStorage.getItem("token");
-      
+
       const passwordData = {
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
       };
-      
+
       await axios.patch(`${base_url}/api/user/change-password`, passwordData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      
+
       toast.success("Password changed successfully");
-      
+
       // Reset password fields
       passwordForm.reset();
       setPasswordChanged(false);
@@ -149,11 +157,16 @@ export default function Profile() {
       <div className="max-w-6xl mx-auto px-6 py-12">
         <div className="mb-10">
           <h1 className="text-3xl font-bold text-gray-800">My Profile</h1>
-          <p className="text-gray-500 mt-1">Update your personal information and password</p>
+          <p className="text-gray-500 mt-1">
+            Update your personal information and password
+          </p>
         </div>
 
         {/* Personal Information Form */}
-        <form onSubmit={profileForm.handleSubmit(updateProfile)} className="mt-6">
+        <form
+          onSubmit={profileForm.handleSubmit(updateProfile)}
+          className="mt-6"
+        >
           <div className="space-y-12">
             {/* Personal Information Section */}
             <div>
@@ -162,7 +175,7 @@ export default function Profile() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Only show name field if it exists in profile data */}
-                {(profileData?.name !== undefined) && (
+                {profileData?.name !== undefined && (
                   <div>
                     <label className="flex items-center text-gray-700 font-medium mb-2">
                       <FiUser className="mr-2" />
@@ -170,9 +183,13 @@ export default function Profile() {
                     </label>
                     <input
                       type="text"
-                      {...profileForm.register("name", { required: "Name is required" })}
+                      {...profileForm.register("name", {
+                        required: "Name is required",
+                      })}
                       className={`w-full px-4 py-3 border-b-2 ${
-                        profileForm.formState.errors.name ? "border-red-500" : "border-gray-300"
+                        profileForm.formState.errors.name
+                          ? "border-red-500"
+                          : "border-gray-300"
                       } focus:border-blue-500 focus:outline-none transition-colors bg-gray-50`}
                       placeholder="Enter your full name"
                     />
@@ -185,7 +202,7 @@ export default function Profile() {
                 )}
 
                 {/* Only show email field if it exists in profile data */}
-                {(profileData?.email !== undefined) && (
+                {profileData?.email !== undefined && (
                   <div>
                     <label className="flex items-center text-gray-700 font-medium mb-2">
                       <FiMail className="mr-2" />
@@ -201,7 +218,9 @@ export default function Profile() {
                         },
                       })}
                       className={`w-full px-4 py-3 border-b-2 ${
-                        profileForm.formState.errors.email ? "border-red-500" : "border-gray-300"
+                        profileForm.formState.errors.email
+                          ? "border-red-500"
+                          : "border-gray-300"
                       } focus:border-blue-500 focus:outline-none transition-colors bg-gray-50`}
                       placeholder="Enter your email address"
                     />
@@ -216,14 +235,15 @@ export default function Profile() {
             </div>
 
             {/* Account Information Section - Only show if role or governate exists */}
-            {(user?.role !== undefined || profileData?.governate !== undefined) && (
+            {(user?.role !== undefined ||
+              profileData?.governate !== undefined) && (
               <div>
                 <h2 className="text-xl font-semibold text-gray-700 mb-6">
                   Account Information
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Only show role field if it exists */}
-                  {(user?.role !== undefined) && (
+                  {user?.role !== undefined && (
                     <div>
                       <label className="flex items-center text-gray-700 font-medium mb-2">
                         <FiUsers className="mr-2" />
@@ -239,7 +259,7 @@ export default function Profile() {
                   )}
 
                   {/* Only show governate field if it exists */}
-                  {(profileData?.governate !== undefined) && (
+                  {profileData?.governate !== undefined && (
                     <div>
                       <label className="flex items-center text-gray-700 font-medium mb-2">
                         <FiMap className="mr-2" />
@@ -249,6 +269,49 @@ export default function Profile() {
                         disabled
                         type="text"
                         {...profileForm.register("governate")}
+                        className="w-full px-4 py-3 border-b-2 border-gray-300 focus:outline-none bg-gray-100 text-gray-600"
+                      />
+                    </div>
+                  )}
+                  {/* Add more fields as needed */}
+                  {profileData?.Area !== undefined && (
+                    <div>
+                      <label className="flex items-center text-gray-700 font-medium mb-2">
+                        <FiUsers className="mr-2" />
+                        Area Manager
+                      </label>
+                      <input
+                        disabled
+                        type="text"
+                        value={profileData?.Area.name || ""}
+                        className="w-full px-4 py-3 border-b-2 border-gray-300 focus:outline-none bg-gray-100 text-gray-600"
+                      />
+                    </div>
+                  )}
+                  {profileData?.LM !== undefined && (
+                    <div>
+                      <label className="flex items-center text-gray-700 font-medium mb-2">
+                        <FiUsers className="mr-2" />
+                        Line Manager
+                      </label>
+                      <input
+                        disabled
+                        type="text"
+                        value={profileData?.LM.name || ""}
+                        className="w-full px-4 py-3 border-b-2 border-gray-300 focus:outline-none bg-gray-100 text-gray-600"
+                      />
+                    </div>
+                  )}
+                  {profileData?.DM !== undefined && (
+                    <div>
+                      <label className="flex items-center text-gray-700 font-medium mb-2">
+                        <FiUsers className="mr-2" />
+                        District Manager
+                      </label>
+                      <input
+                        disabled
+                        type="text"
+                        value={profileData?.DM.name || ""}
                         className="w-full px-4 py-3 border-b-2 border-gray-300 focus:outline-none bg-gray-100 text-gray-600"
                       />
                     </div>
@@ -301,7 +364,10 @@ export default function Profile() {
         </form>
 
         {/* Password Change Form */}
-        <form onSubmit={passwordForm.handleSubmit(changePassword)} className="mt-16">
+        <form
+          onSubmit={passwordForm.handleSubmit(changePassword)}
+          className="mt-16"
+        >
           <div className="space-y-12">
             {/* Password Change Section */}
             <div>
@@ -312,15 +378,19 @@ export default function Profile() {
                 <div>
                   <label className="flex items-center text-gray-700 font-medium mb-2">
                     <FiLock className="mr-2" />
-                    Current Password <span className="text-red-500 ml-1">*</span>
+                    Current Password{" "}
+                    <span className="text-red-500 ml-1">*</span>
                   </label>
                   <input
                     type="password"
-                    {...passwordForm.register("currentPassword", { 
-                      required: "Current password is required to change password" 
+                    {...passwordForm.register("currentPassword", {
+                      required:
+                        "Current password is required to change password",
                     })}
                     className={`w-full px-4 py-3 border-b-2 ${
-                      passwordForm.formState.errors.currentPassword ? "border-red-500" : "border-gray-300"
+                      passwordForm.formState.errors.currentPassword
+                        ? "border-red-500"
+                        : "border-gray-300"
                     } focus:border-blue-500 focus:outline-none transition-colors bg-gray-50`}
                     placeholder="Enter current password"
                   />
@@ -346,7 +416,9 @@ export default function Profile() {
                       },
                     })}
                     className={`w-full px-4 py-3 border-b-2 ${
-                      passwordForm.formState.errors.newPassword ? "border-red-500" : "border-gray-300"
+                      passwordForm.formState.errors.newPassword
+                        ? "border-red-500"
+                        : "border-gray-300"
                     } focus:border-blue-500 focus:outline-none transition-colors bg-gray-50`}
                     placeholder="Enter new password"
                   />

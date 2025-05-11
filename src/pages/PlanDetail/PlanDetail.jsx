@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import LocationNoteForm from "../../components/LocationNoteForm";
 import planService from "../../store/Plan/planyService";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import { useAuth } from "../../context/AuthContext";
 
 // PlanRegionCard component from UsersPlan.jsx
 const PlanRegionCard = ({ region, planId, onDataRefresh }) => {
@@ -378,6 +379,7 @@ const PlanDetail = () => {
   const navigate = useNavigate();
   const [plan, setPlan] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchPlanDetails();
@@ -458,12 +460,14 @@ const PlanDetail = () => {
             </div>
             <div className="mt-4 md:mt-0 flex items-center gap-3">
               {/* Edit Button */}
-              <button
-                onClick={handleEditPlan}
-                className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
-              >
-                <FiEdit /> Edit Plan
-              </button>
+              {user.role.includes(["GM", "HR"]) && (
+                <button
+                  onClick={handleEditPlan}
+                  className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+                >
+                  <FiEdit /> Edit Plan
+                </button>
+              )}
               <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200">
                 <div className="flex items-center gap-2">
                   <span className="text-gray-600">Completion:</span>

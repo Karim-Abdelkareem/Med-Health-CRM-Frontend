@@ -26,9 +26,13 @@ export default function CreatePlan() {
   // Function to check if it's the last 7 days of the month
   const isLastWeekOfMonth = () => {
     const today = new Date();
-    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const lastDayOfMonth = new Date(
+      today.getFullYear(),
+      today.getMonth() + 1,
+      0
+    );
     const daysUntilEndOfMonth = lastDayOfMonth.getDate() - today.getDate();
-    
+
     return daysUntilEndOfMonth <= 7;
   };
 
@@ -47,7 +51,6 @@ export default function CreatePlan() {
       setPlanData(response.data);
     } catch (error) {
       console.error("Failed to fetch plan data:", error);
-      toast.error("Failed to fetch plan data");
     } finally {
       setIsLoading(false);
     }
@@ -126,8 +129,8 @@ export default function CreatePlan() {
             onClick={() => setIsOpen(true)}
             disabled={planData.plans?.length > 0 && !isLastWeekOfMonth()}
             className={`bg-blue-500 hover:bg-blue-600 text-white font-semibold mr-6 py-2 px-4 rounded ${
-              planData.plans?.length > 0 && !isLastWeekOfMonth() 
-                ? "opacity-50 cursor-not-allowed" 
+              planData.plans?.length > 0 && !isLastWeekOfMonth()
+                ? "opacity-50 cursor-not-allowed"
                 : ""
             }`}
             title={

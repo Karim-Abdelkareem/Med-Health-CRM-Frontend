@@ -19,6 +19,7 @@ import UsersList from "../pages/UsersList/UsersList";
 import UserEdit from "../pages/UserEdit/UserEdit";
 import PlanDetail from "../pages/PlanDetail/PlanDetail";
 import EditPlan from "../pages/EditPlan/EditPlan";
+import HolidayRequest from "../pages/HolidayRequest/HolidayRequest";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -38,7 +39,7 @@ export default function AppRoutes() {
         <Route
           path="/users-plans"
           element={
-            <RoleBasedRoute allowedRoles={["HR","GM" ,"DM", "LM"]}>
+            <RoleBasedRoute allowedRoles={["HR", "GM", "DM", "LM", "Area"]}>
               <UsersPlan />
             </RoleBasedRoute>
           }
@@ -62,7 +63,7 @@ export default function AppRoutes() {
         <Route
           path="add-location"
           element={
-            <RoleBasedRoute allowedRoles={["HR", "DM","GM"]}>
+            <RoleBasedRoute allowedRoles={["HR", "DM", "GM"]}>
               <Location />
             </RoleBasedRoute>
           }
@@ -70,7 +71,7 @@ export default function AppRoutes() {
         <Route
           path="/add-user"
           element={
-            <RoleBasedRoute allowedRoles={["HR","GM"]}>
+            <RoleBasedRoute allowedRoles={["HR", "GM"]}>
               <CreateUser />
             </RoleBasedRoute>
           }
@@ -113,11 +114,14 @@ export default function AppRoutes() {
         <Route
           path="/notifications"
           element={
-            <RoleBasedRoute allowedRoles={["R", "HR", "LM", "DM", "GM"]}>
+            <RoleBasedRoute
+              allowedRoles={["R", "HR", "LM", "DM", "GM", "Area"]}
+            >
               <Notifications />
             </RoleBasedRoute>
           }
         />
+        <Route path="/request-holiday" element={<HolidayRequest />} />
       </Route>
       <Route path="*" element={<div>Not Found</div>} />
     </Routes>

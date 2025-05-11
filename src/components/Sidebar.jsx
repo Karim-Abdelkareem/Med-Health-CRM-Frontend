@@ -13,7 +13,7 @@ import { MdOutlineAddLocationAlt, MdOutlineEditCalendar } from "react-icons/md";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useNotifications } from "../context/NotificationsContext";
-import { BsListTask } from "react-icons/bs";
+import { BsCalendarDay, BsListTask } from "react-icons/bs";
 import { HiOutlineUserAdd } from "react-icons/hi";
 import MobileMenu from "./MobileMenu";
 import { FaHistory } from "react-icons/fa";
@@ -65,6 +65,9 @@ export default function Sidebar() {
       case "HR":
         setRoutes(HRRoutes);
         break;
+      case "Area":
+        setRoutes(AreaRoutes);
+        break;
       default:
         break;
     }
@@ -96,6 +99,11 @@ export default function Sidebar() {
       name: "Notifications",
       icon: <FiBell />,
       badge: true,
+    },
+    {
+      path: "/request-holiday",
+      name: "Request Holiday",
+      icon: <BsCalendarDay />,
     },
     {
       path: "/profile",
@@ -182,6 +190,40 @@ export default function Sidebar() {
     },
   ];
 
+  const AreaRoutes = [
+    {
+      path: "/",
+      name: "Dashboard",
+      icon: <FiHome />,
+    },
+    {
+      path: "/create-plans",
+      name: "Create Plan",
+      icon: <MdOutlineEditCalendar />,
+    },
+    {
+      path: "/my-plans",
+      name: "My Plans",
+      icon: <FiCalendar />,
+    },
+    {
+      path: "/users-plans",
+      name: "Users Plans",
+      icon: <BsListTask />,
+    },
+    {
+      path: "/profile",
+      name: "Profile",
+      icon: <FiUser />,
+    },
+    {
+      path: "/notifications",
+      name: "Notifications",
+      icon: <FiBell />,
+      badge: true,
+    },
+  ];
+
   return (
     <>
       {/* Desktop Sidebar */}
@@ -218,7 +260,24 @@ export default function Sidebar() {
                         {user?.name || "User"}
                       </span>
                       <span className="ml-2 text-xs text-gray-600 font-medium">
-                        {user?.role || "Guest"}
+                        {(() => {
+                          switch (user?.role) {
+                            case "R":
+                              return "Representative";
+                            case "DM":
+                              return "District Manager";
+                            case "LM":
+                              return "Line Manager";
+                            case "Area":
+                              return "Area Sales Manager";
+                            case "HR":
+                              return "HR";
+                            case "GM":
+                              return "General Manager";
+                            default:
+                              return "Guest";
+                          }
+                        })()}
                       </span>
                     </div>
                   </div>
@@ -253,18 +312,26 @@ export default function Sidebar() {
                 <li key={index} className="mb-2">
                   <Link
                     to={route.path}
-                    className={`flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors ${
+                    className={`flex relative items-center px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors ${
                       window.location.pathname === route.path
                         ? "bg-gray-200"
                         : ""
                     }`}
                   >
-                    <span className="text-xl">{route.icon}</span>
+                    <span className={`text-xl ${!isSidebarOpen && "mx-auto"}`}>
+                      {route.icon}
+                    </span>
                     {isSidebarOpen && (
                       <span className="ml-3">{route.name}</span>
                     )}
                     {route.badge && unreadCount > 0 && (
-                      <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                      <span
+                        className={`ml-auto bg-red-500 text-white text-xs font-bold rounded-full ${
+                          !isSidebarOpen
+                            ? "absolute right-4 top-0 px-1"
+                            : "px-2 py-1 "
+                        }`}
+                      >
                         {unreadCount}
                       </span>
                     )}

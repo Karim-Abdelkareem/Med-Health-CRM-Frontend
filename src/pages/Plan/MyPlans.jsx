@@ -72,7 +72,7 @@ export default function MyPlans() {
         setSelectedPlanId(planToShow._id);
       }
     } catch (err) {
-      toast.error(err.response?.data?.error.message);
+      console.error("Error fetching plan data:", err);
     } finally {
       setIsLoading(false);
     }
@@ -234,12 +234,16 @@ export default function MyPlans() {
                     <div className="mb-2 text-sm text-gray-600">
                       <span className="font-medium">Location:</span>{" "}
                       {typeof note.location === "object"
-                        ? note.location.locationName
+                        ? note.location.locationName || "Unknown Location"
                         : "Unknown Location"}
                     </div>
                   )}
                   <p className="text-gray-700">
-                    {note.type || "No note content"}
+                    {typeof note.type === "string"
+                      ? note.type
+                      : typeof note.note === "string"
+                      ? note.note
+                      : "No note content"}
                   </p>
                 </div>
               ))}
@@ -253,7 +257,25 @@ export default function MyPlans() {
           notes.length > 0 ? (
             <ul className="text-gray-700 whitespace-pre-line italic space-y-2">
               {notes.map((note, idx) => (
-                <li key={idx}>• {note}</li>
+                <li key={idx}>
+                  {typeof note === "string" ? (
+                    `• ${note}`
+                  ) : note && typeof note === "object" ? (
+                    <div className="p-2 bg-white rounded border border-gray-100">
+                      {note.location && (
+                        <div className="mb-1 text-sm text-gray-600">
+                          <span className="font-medium">Location:</span>{" "}
+                          {typeof note.location === "string"
+                            ? note.location
+                            : note.location?.locationName || "Unknown Location"}
+                        </div>
+                      )}
+                      <div>• {note.note || note.type || "No note content"}</div>
+                    </div>
+                  ) : (
+                    "• Invalid note format"
+                  )}
+                </li>
               ))}
             </ul>
           ) : (
@@ -470,14 +492,14 @@ export default function MyPlans() {
                     </div>
 
                     <div className="space-y-6">
-                      {/* General Notes */}
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                          <CgNotes size={20} />
-                          Notes
-                        </h3>
-                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                          {planToShow.notes?.length > 0 ? (
+                      {/* General Notes - only show if they exist */}
+                      {planToShow.notes?.length > 0 && (
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                            <CgNotes size={20} />
+                            Notes
+                          </h3>
+                          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <div className="space-y-2">
                               {planToShow.notes.map((noteItem, idx) => (
                                 <div
@@ -520,19 +542,15 @@ export default function MyPlans() {
                                 </div>
                               ))}
                             </div>
-                          ) : (
-                            <p className="text-gray-700 whitespace-pre-line">
-                              No notes added
-                            </p>
-                          )}
+                          </div>
                         </div>
-                      </div>
+                      )}
 
-                      {/* Use the renderNoteSection helper for all note types */}
-                      {renderNoteSection("gmNotes", planToShow.gmNotes)}
-                      {renderNoteSection("dmNotes", planToShow.dmNotes)}
-                      {renderNoteSection("lmNotes", planToShow.lmNotes)}
-                      {renderNoteSection("hrNotes", planToShow.hrNotes)}
+                      {/* Only render note sections if they exist and have content */}
+                      {planToShow.gmNotes?.length > 0 && renderNoteSection("gmNotes", planToShow.gmNotes)}
+                      {planToShow.dmNotes?.length > 0 && renderNoteSection("dmNotes", planToShow.dmNotes)}
+                      {planToShow.lmNotes?.length > 0 && renderNoteSection("lmNotes", planToShow.lmNotes)}
+                      {planToShow.hrNotes?.length > 0 && renderNoteSection("hrNotes", planToShow.hrNotes)}
                     </div>
                   </div>
                 </div>
