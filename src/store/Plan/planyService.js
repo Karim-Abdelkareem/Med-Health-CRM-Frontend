@@ -213,6 +213,14 @@ const planService = {
     );
     return response.data;
   },
+
+  getUserPlans: async (userId) => {
+    const token = getAuthToken();
+    const response = await axios.get(`${API_URL}/user/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  },
 };
 
 export default planService;

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import userService from "../../store/User/UserService";
-import { FiEdit, FiUserX, FiUserCheck } from "react-icons/fi";
+import { FiEdit, FiUserX, FiUserCheck, FiEye } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -21,16 +21,16 @@ export default function UsersList() {
   // Add a function to filter users based on role hierarchy
   const filterUsersByRole = (users) => {
     if (!user) return [];
-    
+
     const userRoleIndex = roleHierarchy.indexOf(user.role);
-    
+
     // If user is GM or HR, show all users
     if (user.role === "GM" || user.role === "HR") {
       return users;
     }
-    
+
     // Otherwise, filter users based on hierarchy
-    return users.filter(u => {
+    return users.filter((u) => {
       const roleIndex = roleHierarchy.indexOf(u.role);
       return roleIndex < userRoleIndex; // Only show users with lower permission level
     });
@@ -76,23 +76,21 @@ export default function UsersList() {
   };
 
   // Apply both search and status filters
-  const filteredUsers = users.filter(
-    (user) => {
-      // Apply search filter
-      const matchesSearch = 
-        user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.role?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      // Apply status filter
-      const matchesStatus = 
-        statusFilter === "all" || 
-        (statusFilter === "active" && user.active) || 
-        (statusFilter === "inactive" && !user.active);
-      
-      return matchesSearch && matchesStatus;
-    }
-  );
+  const filteredUsers = users.filter((user) => {
+    // Apply search filter
+    const matchesSearch =
+      user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.role?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Apply status filter
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "active" && user.active) ||
+      (statusFilter === "inactive" && !user.active);
+
+    return matchesSearch && matchesStatus;
+  });
 
   const getRoleBadgeColor = (role) => {
     switch (role) {
@@ -217,6 +215,13 @@ export default function UsersList() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-3">
+                        <button
+                          onClick={() => navigate(`/user/${user._id}`)}
+                          className="text-gray-600 hover:text-gray-900"
+                          title="View User"
+                        >
+                          <FiEye size={18} />
+                        </button>
                         <button
                           onClick={() => handleEdit(user._id)}
                           className="text-blue-600 hover:text-blue-900"
