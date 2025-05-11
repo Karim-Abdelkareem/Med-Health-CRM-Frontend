@@ -65,6 +65,9 @@ export default function Sidebar() {
       case "HR":
         setRoutes(HRRoutes);
         break;
+      case "LM":
+        setRoutes(LMRoutes);
+        break;
       default:
         break;
     }
@@ -168,6 +171,40 @@ export default function Sidebar() {
       path: "/users",
       name: "Users List",
       icon: <IoPersonOutline />,
+    },
+    {
+      path: "/profile",
+      name: "Profile",
+      icon: <FiUser />,
+    },
+    {
+      path: "/notifications",
+      name: "Notifications",
+      icon: <FiBell />,
+      badge: true,
+    },
+  ];
+
+  const LMRoutes = [
+    {
+      path: "/",
+      name: "Dashboard",
+      icon: <FiHome />,
+    },
+    {
+      path: "/team-plans",
+      name: "Team Plans",
+      icon: <BsListTask />,
+    },
+    {
+      path: "/add-task",
+      name: "Add Task",
+      icon: <HiOutlineUserAdd />,
+    },
+    {
+      path: "/reports",
+      name: "Reports",
+      icon: <FaHistory />,
     },
     {
       path: "/profile",
