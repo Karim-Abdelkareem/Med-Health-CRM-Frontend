@@ -100,9 +100,9 @@ const PlanRegionCard = ({ region, planId, onDataRefresh }) => {
                 status.toLowerCase() === "completed"
                   ? "text-green-600"
                   : "text-red-600"
-              }`}
+              } capitalize font-bold`}
             >
-              {status.charAt(0).toUpperCase() + status.slice(1)}
+              {status}
             </span>
           </p>
           <p>
