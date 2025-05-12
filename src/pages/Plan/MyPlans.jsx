@@ -21,6 +21,9 @@ export default function MyPlans() {
   const [error, setError] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedPlanData, setSelectedPlanData] = useState(null);
+  const [showEndVisitModal, setShowEndVisitModal] = useState(false);
+  const [takesFromUs, setTakesFromUs] = useState(false);
+  const [amount, setAmount] = useState(0);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -106,13 +109,16 @@ export default function MyPlans() {
     }
   };
 
-  const endVisit = async (planId, regionId) => {
+  const endVisit = async (
+    planId,
+    regionId,
+    takesFromUs = false,
+    amount = 0
+  ) => {
     try {
-      // Use the passed parameters instead of state values
       const planIdToUse = planId || selectedPlanId;
       const regionIdToUse = regionId || selectedRegionId;
 
-      // Validate IDs before making the API call
       if (!planIdToUse || !regionIdToUse) {
         toast.error("Invalid plan or location data");
         return;
@@ -147,18 +153,28 @@ export default function MyPlans() {
       // Wait for position data
       const locationData = await getCurrentPosition();
 
-      // Make API call with the location data
-      await planService.endVisitedRegion(
+      // Pass the additional parameters to the API call
+      await planService.endVisit(
         planIdToUse,
         regionIdToUse,
-        locationData
+        locationData,
+        takesFromUs,
+        amount
       );
-      toast.success("Plan updated successfully");
+      toast.success("Visit ended successfully");
       fetchPlanData();
     } catch (err) {
-      console.error("Error updating plan:", err);
-      toast.error("Error updating plan");
+      console.error("Error ending visit:", err);
+      toast.error("Error ending visit");
     }
+  };
+
+  const handleEndVisitWithDetails = () => {
+    endVisit(selectedPlanId, selectedRegionId, takesFromUs, amount);
+    setShowEndVisitModal(false);
+    // Reset the form values
+    setTakesFromUs(false);
+    setAmount(0);
   };
 
   const cancelVisit = async (planId, regionId) => {
@@ -385,77 +401,114 @@ export default function MyPlans() {
                         Locations
                       </h3>
                       <div className="grid gap-4 md:grid-cols-1">
-                        {planToShow.locations.map((region, index) => (
-                          <div
-                            key={index}
-                            className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden"
-                          >
-                            {/* Individual Location Map */}
-                            <div className="relative">
-                              <LocationMap
-                                location={region.location}
-                                status={region.status}
-                                userLocation={location}
-                              />
-                            </div>
+                        {planToShow.locations
+                          .slice()
+                          .sort((a, b) => {
+                            // First sort by status: incomplete first, then completed
+                            const statusA = a.status?.toLowerCase().trim() || "";
+                            const statusB = b.status?.toLowerCase().trim() || "";
+                            
+                            if (statusA === "incomplete" && statusB === "completed") return -1;
+                            if (statusA === "completed" && statusB === "incomplete") return 1;
+                            
+                            // If both are completed, sort by endDate (most recent first)
+                            if (statusA === "completed" && statusB === "completed") {
+                              // If endDate exists for both, compare them
+                              if (a.endDate && b.endDate) {
+                                return new Date(b.endDate) - new Date(a.endDate);
+                              }
+                              // If only one has endDate, prioritize the one with endDate
+                              if (a.endDate) return -1;
+                              if (b.endDate) return 1;
+                            }
+                            
+                            return 0;
+                          })
+                          .map((region, index) => (
+                            <div
+                              key={index}
+                              className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden"
+                            >
+                              {/* Individual Location Map */}
+                              <div className="relative">
+                                <LocationMap
+                                  location={region.location}
+                                  status={region.status}
+                                  userLocation={location}
+                                />
+                              </div>
 
-                            {/* Location Details */}
-                            <div className="p-4">
-                              <div className="flex justify-between">
-                                <div className="flex justify-between items-start">
+                              {/* Location Details */}
+                              <div className="p-4">
+                                <div className="flex justify-between">
+                                  <div className="flex justify-between items-start">
+                                    <div>
+                                      <h4 className="font-medium text-gray-800">
+                                        {region.location.locationName}
+                                      </h4>
+                                      <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
+                                        <FaMapMarkerAlt
+                                          className="text-gray-400"
+                                          size={12}
+                                        />
+                                        {region.location.address}
+                                      </p>
+                                    </div>
+                                  </div>
                                   <div>
-                                    <h4 className="font-medium text-gray-800">
-                                      {region.location.locationName}
-                                    </h4>
-                                    <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
-                                      <FaMapMarkerAlt
-                                        className="text-gray-400"
-                                        size={12}
-                                      />
-                                      {region.location.address}
-                                    </p>
+                                    <span
+                                      className={`text-xs px-2 py-1 rounded-full font-medium bg-white shadow ${
+                                        {
+                                          completed:
+                                            "bg-green-100 text-green-800",
+                                          incomplete: "bg-red-100 text-red-800",
+                                        }[region.status?.toLowerCase().trim()] ||
+                                        "bg-gray-100"
+                                      }`}
+                                    >
+                                      {region.status}
+                                    </span>
                                   </div>
                                 </div>
-                                <div>
-                                  <span
-                                    className={`text-xs px-2 py-1 rounded-full font-medium bg-white shadow ${
-                                      {
-                                        completed:
-                                          "bg-green-100 text-green-800",
-                                        incomplete: "bg-red-100 text-red-800",
-                                      }[region.status?.toLowerCase().trim()] ||
-                                      "bg-gray-100"
-                                    }`}
-                                  >
-                                    {region.status}
-                                  </span>
-                                </div>
-                              </div>
-                              {/* Start Visit button */}
-                              <div className="mt-3 flex items-center gap-3">
-                                {region.status?.toLowerCase().trim() ===
-                                  "incomplete" &&
-                                  (!region.startLatitude ||
-                                    !region.startLongitude) && (
-                                    <button
-                                      className="bg-green-100 text-green-700 text-sm px-3 py-1 rounded hover:bg-green-200 transition"
-                                      onClick={() => {
-                                        // Set state for future use
-                                        setSelectedPlanId(planToShow._id);
-                                        setSelectedRegionId(region._id);
-                                        // Pass IDs directly to the function
-                                        updateToVisited(
-                                          planToShow._id,
-                                          region._id
-                                        );
-                                      }}
-                                    >
-                                      Start Visit
-                                    </button>
-                                  )}
-                                {region.status?.toLowerCase().trim() ===
-                                  "incomplete" &&
-                                  region.startDate && (
+                                {/* Start Visit button */}
+                                <div className="mt-3 flex items-center gap-3">
+                                  {region.status?.toLowerCase().trim() ===
+                                    "incomplete" &&
+                                    (!region.startLatitude ||
+                                      !region.startLongitude) && (
+                                      <button
+                                        className="bg-green-100 text-green-700 text-sm px-3 py-1 rounded hover:bg-green-200 transition"
+                                        onClick={() => {
+                                          // Set state for future use
+                                          setSelectedPlanId(planToShow._id);
+                                          setSelectedRegionId(region._id);
+                                          // Pass IDs directly to the function
+                                          updateToVisited(
+                                            planToShow._id,
+                                            region._id
+                                          );
+                                        }}
+                                      >
+                                        Start Visit
+                                      </button>
+                                    )}
+                                  {region.status?.toLowerCase().trim() ===
+                                    "incomplete" &&
+                                    region.startDate && (
+                                      <button
+                                        className="bg-red-100 text-red-700 text-sm px-3 py-1 rounded hover:bg-red-200 transition"
+                                        onClick={() => {
+                                          // Show the end visit modal instead of directly ending the visit
+                                          setShowEndVisitModal(true);
+                                          setSelectedPlanId(planToShow._id);
+                                          setSelectedRegionId(region._id);
+                                        }}
+                                      >
+                                        End Visit
+                                      </button>
+                                    )}
+                                  {region.status?.toLowerCase().trim() ===
+                                    "completed" && (
                                     <button
                                       className="bg-red-100 text-red-700 text-sm px-3 py-1 rounded hover:bg-red-200 transition"
                                       onClick={() => {
@@ -463,31 +516,16 @@ export default function MyPlans() {
                                         setSelectedPlanId(planToShow._id);
                                         setSelectedRegionId(region._id);
                                         // Pass IDs directly to the function
-                                        endVisit(planToShow._id, region._id);
+                                        cancelVisit(planToShow._id, region._id);
                                       }}
                                     >
-                                      End Visit
+                                      Cancel Visit
                                     </button>
                                   )}
-                                {region.status?.toLowerCase().trim() ===
-                                  "completed" && (
-                                  <button
-                                    className="bg-red-100 text-red-700 text-sm px-3 py-1 rounded hover:bg-red-200 transition"
-                                    onClick={() => {
-                                      // Set state for future use
-                                      setSelectedPlanId(planToShow._id);
-                                      setSelectedRegionId(region._id);
-                                      // Pass IDs directly to the function
-                                      cancelVisit(planToShow._id, region._id);
-                                    }}
-                                  >
-                                    Cancel Visit
-                                  </button>
-                                )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
                       </div>
                     </div>
 
@@ -547,10 +585,14 @@ export default function MyPlans() {
                       )}
 
                       {/* Only render note sections if they exist and have content */}
-                      {planToShow.gmNotes?.length > 0 && renderNoteSection("gmNotes", planToShow.gmNotes)}
-                      {planToShow.dmNotes?.length > 0 && renderNoteSection("dmNotes", planToShow.dmNotes)}
-                      {planToShow.lmNotes?.length > 0 && renderNoteSection("lmNotes", planToShow.lmNotes)}
-                      {planToShow.hrNotes?.length > 0 && renderNoteSection("hrNotes", planToShow.hrNotes)}
+                      {planToShow.gmNotes?.length > 0 &&
+                        renderNoteSection("gmNotes", planToShow.gmNotes)}
+                      {planToShow.dmNotes?.length > 0 &&
+                        renderNoteSection("dmNotes", planToShow.dmNotes)}
+                      {planToShow.lmNotes?.length > 0 &&
+                        renderNoteSection("lmNotes", planToShow.lmNotes)}
+                      {planToShow.hrNotes?.length > 0 &&
+                        renderNoteSection("hrNotes", planToShow.hrNotes)}
                     </div>
                   </div>
                 </div>
@@ -565,6 +607,84 @@ export default function MyPlans() {
           )}
         </div>
       </div>
+      {/* End Visit Modal */}
+      {showEndVisitModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">End Visit</h2>
+              <button
+                onClick={() => setShowEndVisitModal(false)}
+                className="text-red-600"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-gray-700 mb-4">
+                Please provide the following information to end your visit:
+              </p>
+
+              <div className="mb-4">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={takesFromUs}
+                    onChange={(e) => setTakesFromUs(e.target.checked)}
+                    className="form-checkbox h-5 w-5 text-blue-600 rounded"
+                  />
+                  <span className="text-gray-700">Takes From Us</span>
+                </label>
+              </div>
+              {takesFromUs && (
+                <div className="mb-4">
+                  <label className="block text-gray-700 mb-2">Amount</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={amount}
+                    onChange={(e) =>
+                      setAmount(Math.max(0, parseInt(e.target.value) || 0))
+                    }
+                    className="w-full border rounded p-2"
+                    placeholder="Enter amount"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setShowEndVisitModal(false)}
+                className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEndVisitWithDetails}
+                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              >
+                End Visit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {isEditModalOpen && selectedPlanData && (
         <EditPlanModal
           isOpen={isEditModalOpen}

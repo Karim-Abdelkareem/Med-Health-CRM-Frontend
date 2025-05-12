@@ -460,7 +460,7 @@ const PlanDetail = () => {
             </div>
             <div className="mt-4 md:mt-0 flex items-center gap-3">
               {/* Edit Button */}
-              {user.role.includes(["GM", "HR"]) && (
+              {(user.role === "GM" || user.role === "HR") && (
                 <button
                   onClick={handleEditPlan}
                   className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
@@ -501,15 +501,39 @@ const PlanDetail = () => {
             <h5 className="font-semibold text-lg mb-2">
               Regions/Plans/Locations
             </h5>
-            <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-              {regions.map((region, index) => (
-                <PlanRegionCard
-                  key={index}
-                  region={region}
-                  planId={id}
-                  onDataRefresh={fetchPlanDetails}
-                />
-              ))}
+            <div className="space-y-4">
+              {/* Sort regions: incomplete first, then completed sorted by endDate (most recent first) */}
+              {regions
+                .slice()
+                .sort((a, b) => {
+                  // First sort by status: incomplete first, then completed
+                  const statusA = a.status?.toLowerCase().trim() || "";
+                  const statusB = b.status?.toLowerCase().trim() || "";
+                  
+                  if (statusA === "incomplete" && statusB === "completed") return -1;
+                  if (statusA === "completed" && statusB === "incomplete") return 1;
+                  
+                  // If both are completed, sort by endDate (most recent first)
+                  if (statusA === "completed" && statusB === "completed") {
+                    // If endDate exists for both, compare them
+                    if (a.endDate && b.endDate) {
+                      return new Date(b.endDate) - new Date(a.endDate);
+                    }
+                    // If only one has endDate, prioritize the one with endDate
+                    if (a.endDate) return -1;
+                    if (b.endDate) return 1;
+                  }
+                  
+                  return 0;
+                })
+                .map((region) => (
+                  <PlanRegionCard
+                    key={region._id || region.location?._id}
+                    region={region}
+                    planId={id}
+                    onDataRefresh={fetchPlanDetails}
+                  />
+                ))}
             </div>
           </div>
         ) : (

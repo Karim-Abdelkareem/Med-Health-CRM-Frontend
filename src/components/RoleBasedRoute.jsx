@@ -11,7 +11,7 @@ export default function RoleBasedRoute({ children, allowedRoles }) {
       if (!isAuthenticated) {
         navigate("/login");
       } else if (!allowedRoles.includes(user?.role)) {
-        navigate("/"); // إعادة توجيه إلى الصفحة الرئيسية إذا لم يكن لديه الصلاحية
+        navigate("/my-plans");
       }
     }
   }, [isAuthenticated, checkingAuth, user, allowedRoles, navigate]);

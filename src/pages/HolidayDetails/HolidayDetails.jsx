@@ -255,7 +255,7 @@ export default function HolidayDetails() {
                 {holiday.approvedBy && (
                   <div className="mt-6">
                     <h3 className="text-sm font-medium text-gray-500">
-                      Approved By
+                      Approved/Rejected By
                     </h3>
                     <div className="mt-2 p-4 bg-gray-50 rounded-lg">
                       <p className="text-gray-700 whitespace-pre-line">

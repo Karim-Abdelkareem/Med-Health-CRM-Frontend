@@ -35,7 +35,14 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route path="/" element={<Dashboard />} />
+        <Route
+          path="/"
+          element={
+            <RoleBasedRoute allowedRoles={["HR", "GM"]}>
+              <Dashboard />
+            </RoleBasedRoute>
+          }
+        />
         <Route path="/create-plans" element={<CreatePlan />} />
         <Route path="/my-plans" element={<MyPlans />} />
         <Route

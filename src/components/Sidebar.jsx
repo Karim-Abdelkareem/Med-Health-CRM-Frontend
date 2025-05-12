@@ -78,19 +78,14 @@ export default function Sidebar() {
 
   const RepresentativeRoutes = [
     {
-      path: "/",
-      name: "Dashboard",
-      icon: <FiHome />,
+      path: "/my-plans",
+      name: "My Plans",
+      icon: <FiCalendar />,
     },
     {
       path: "/create-plans",
       name: "Create Plan",
       icon: <MdOutlineEditCalendar />,
-    },
-    {
-      path: "/my-plans",
-      name: "My Plans",
-      icon: <FiCalendar />,
     },
     {
       path: "/history",
@@ -195,19 +190,14 @@ export default function Sidebar() {
 
   const AreaRoutes = [
     {
-      path: "/",
-      name: "Dashboard",
-      icon: <FiHome />,
+      path: "/my-plans",
+      name: "My Plans",
+      icon: <FiCalendar />,
     },
     {
       path: "/create-plans",
       name: "Create Plan",
       icon: <MdOutlineEditCalendar />,
-    },
-    {
-      path: "/my-plans",
-      name: "My Plans",
-      icon: <FiCalendar />,
     },
     {
       path: "/users-plans",
@@ -229,19 +219,14 @@ export default function Sidebar() {
 
   const LMRoutes = [
     {
-      path: "/",
-      name: "Dashboard",
-      icon: <FiHome />,
+      path: "/my-plans",
+      name: "My Plans",
+      icon: <FiCalendar />,
     },
     {
       path: "/create-plans",
       name: "Create Plan",
       icon: <MdOutlineEditCalendar />,
-    },
-    {
-      path: "/my-plans",
-      name: "My Plans",
-      icon: <FiCalendar />,
     },
     {
       path: "/users-plans",

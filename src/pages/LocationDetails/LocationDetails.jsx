@@ -374,7 +374,7 @@ export default function LocationDetails() {
                                 By: {note.user?.name || "Unknown User"}
                               </span>
                               <p className="text-sm text-gray-900 ">
-                                {note.type}
+                                {note.note}
                               </p>
                             </div>
                           </div>
@@ -395,7 +395,7 @@ export default function LocationDetails() {
                             key={note._id}
                             className="bg-white p-4 rounded-md shadow-sm mb-2"
                           >
-                            <p className="text-sm text-gray-900">{note.type}</p>
+                            <p className="text-sm text-gray-900">{note.note}</p>
                           </div>
                         ))}
                     </div>
@@ -414,7 +414,7 @@ export default function LocationDetails() {
                             key={note._id}
                             className="bg-white p-4 rounded-md shadow-sm mb-2"
                           >
-                            <p className="text-sm text-gray-900">{note.type}</p>
+                            <p className="text-sm text-gray-900">{note.note}</p>
                           </div>
                         ))}
                     </div>
@@ -433,7 +433,7 @@ export default function LocationDetails() {
                             key={note._id}
                             className="bg-white p-4 rounded-md shadow-sm mb-2"
                           >
-                            <p className="text-sm text-gray-900">{note.type}</p>
+                            <p className="text-sm text-gray-900">{note.note}</p>
                           </div>
                         ))}
                     </div>

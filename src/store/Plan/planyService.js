@@ -78,15 +78,15 @@ const planService = {
     return response;
   },
 
-  endVisitedRegion: async (id, locationId, data) => {
-    console.log(data);
-
+  endVisit: async (id, locationId, data, takesFromUs, amount) => {
     const token = getAuthToken();
     const response = await axios.put(
       `${API_URL}/end-visit/${id}/${locationId}`,
       {
         endLatitude: data.endLatitude,
         endLongitude: data.endLongitude,
+        takesFromUs,
+        amount,
       },
       {
         headers: {
