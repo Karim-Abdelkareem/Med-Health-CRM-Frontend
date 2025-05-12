@@ -80,7 +80,7 @@ const PlanRegionCard = ({ region, planId, onDataRefresh }) => {
           <p className="text-gray-600 mt-1">
             <span className="font-semibold">Start Date:</span>{" "}
             {region.startDate && !isNaN(new Date(region.startDate).getTime())
-              ? format(new Date(region.startDate), "dd/MM/yyyy hh:mm a", {
+              ? format(new Date(region.startDate), "dd/MM/yyyy hh:mm:ss a", {
                   locale: enUS,
                 })
               : "Not scheduled"}
@@ -88,7 +88,7 @@ const PlanRegionCard = ({ region, planId, onDataRefresh }) => {
           <p className="text-gray-600 mt-1">
             <span className="font-semibold">End Date:</span>{" "}
             {region.endDate && !isNaN(new Date(region.endDate).getTime())
-              ? format(new Date(region.endDate), "dd/MM/yyyy hh:mm a", {
+              ? format(new Date(region.endDate), "dd/MM/yyyy hh:mm:ss a", {
                   locale: enUS,
                 })
               : "Not scheduled"}
@@ -104,6 +104,14 @@ const PlanRegionCard = ({ region, planId, onDataRefresh }) => {
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
             </span>
+          </p>
+          <p>
+            <span className="font-semibold">Takes From Us:</span>{" "}
+            {region.takesFromUs && region.takesFromUs ? "Yes" : "No"}
+          </p>
+          <p>
+            <span className="font-semibold">Amount:</span>{" "}
+            {region.amount ? region.amount : "N/A"}
           </p>
           {status.toLowerCase() === "completed" && (
             <button
@@ -509,10 +517,12 @@ const PlanDetail = () => {
                   // First sort by status: incomplete first, then completed
                   const statusA = a.status?.toLowerCase().trim() || "";
                   const statusB = b.status?.toLowerCase().trim() || "";
-                  
-                  if (statusA === "incomplete" && statusB === "completed") return -1;
-                  if (statusA === "completed" && statusB === "incomplete") return 1;
-                  
+
+                  if (statusA === "incomplete" && statusB === "completed")
+                    return -1;
+                  if (statusA === "completed" && statusB === "incomplete")
+                    return 1;
+
                   // If both are completed, sort by endDate (most recent first)
                   if (statusA === "completed" && statusB === "completed") {
                     // If endDate exists for both, compare them
@@ -523,7 +533,7 @@ const PlanDetail = () => {
                     if (a.endDate) return -1;
                     if (b.endDate) return 1;
                   }
-                  
+
                   return 0;
                 })
                 .map((region) => (

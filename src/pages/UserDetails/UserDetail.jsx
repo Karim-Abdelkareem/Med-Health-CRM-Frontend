@@ -214,12 +214,12 @@ export default function UserDetail() {
   const planStats = calculatePlanStats(plans);
 
   const planCompletionData = {
-    labels: ["Completed", "In Progress", "Planned"],
+    labels: ["Completed", "In Completed", "Planned"],
     datasets: [
       {
         label: "Plans",
         data: [planStats.completed, planStats.inProgress, planStats.planned],
-        backgroundColor: ["#10B981", "#F59E0B", "#4F46E5"],
+        backgroundColor: ["#10B981", "#FF0000", "#4F46E5"],
       },
     ],
   };
@@ -722,7 +722,7 @@ export default function UserDetail() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
-                              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              className={`px-2 capitalize inline-flex text-xs leading-5 font-semibold rounded-full ${
                                 holiday.status === "approved"
                                   ? "bg-green-100 text-green-800"
                                   : holiday.status === "pending"
@@ -730,8 +730,7 @@ export default function UserDetail() {
                                   : "bg-red-100 text-red-800"
                               }`}
                             >
-                              {holiday.status.charAt(0).toUpperCase() +
-                                holiday.status.slice(1)}
+                              {holiday.status}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -756,8 +755,8 @@ export default function UserDetail() {
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                       Completed: {planStats.completed}
                     </span>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                      In Progress: {planStats.inProgress}
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      In Completed: {planStats.inProgress}
                     </span>
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       Planned: {planStats.planned}
@@ -846,8 +845,11 @@ export default function UserDetail() {
                           totalLocations > 0
                         ) {
                           status = "Completed";
-                        } else if (completedLocations > 0) {
-                          status = "In Progress";
+                        } else if (
+                          completedLocations > 0 &&
+                          totalLocations > 0
+                        ) {
+                          status = "In Completed";
                         }
 
                         return (
@@ -867,7 +869,7 @@ export default function UserDetail() {
                                       completionPercentage === 100
                                         ? "bg-green-600"
                                         : completionPercentage > 0
-                                        ? "bg-yellow-500"
+                                        ? "bg-red-500"
                                         : "bg-blue-600"
                                     }`}
                                     style={{
@@ -880,11 +882,11 @@ export default function UserDetail() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span
-                                className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                className={`px-2 capitalize inline-flex text-xs leading-5 font-semibold rounded-full ${
                                   status === "Completed"
                                     ? "bg-green-100 text-green-800"
-                                    : status === "In Progress"
-                                    ? "bg-yellow-100 text-yellow-800"
+                                    : status === "In Completed"
+                                    ? "bg-red-100 text-red-800"
                                     : "bg-blue-100 text-blue-800"
                                 }`}
                               >
