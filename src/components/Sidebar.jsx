@@ -71,6 +71,9 @@ export default function Sidebar() {
       case "LM":
         setRoutes(LMRoutes);
         break;
+      case "DM": 
+        setRoutes(DMRoutes);
+        break;
       default:
         break;
     }
@@ -122,6 +125,11 @@ export default function Sidebar() {
       icon: <BsListTask />,
     },
     {
+      path: "/users",
+      name: "Users List",
+      icon: <IoPersonOutline />,
+    },
+    {
       path: "/add-user",
       name: "Add User",
       icon: <HiOutlineUserAdd />,
@@ -130,11 +138,6 @@ export default function Sidebar() {
       path: "/add-location",
       name: "Location",
       icon: <MdOutlineAddLocationAlt />,
-    },
-    {
-      path: "/settings",
-      name: "Settings",
-      icon: <FiSettings />,
     },
     {
       path: "/profile",
@@ -189,6 +192,35 @@ export default function Sidebar() {
   ];
 
   const AreaRoutes = [
+    {
+      path: "/my-plans",
+      name: "My Plans",
+      icon: <FiCalendar />,
+    },
+    {
+      path: "/create-plans",
+      name: "Create Plan",
+      icon: <MdOutlineEditCalendar />,
+    },
+    {
+      path: "/users-plans",
+      name: "Users Plans",
+      icon: <BsListTask />,
+    },
+    {
+      path: "/profile",
+      name: "Profile",
+      icon: <FiUser />,
+    },
+    {
+      path: "/notifications",
+      name: "Notifications",
+      icon: <FiBell />,
+      badge: true,
+    },
+  ];
+
+  const DMRoutes = [
     {
       path: "/my-plans",
       name: "My Plans",
