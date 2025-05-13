@@ -119,27 +119,101 @@ export default function MonthlyPlan({ planData, selectedPlan }) {
               Select a day to view details:
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
-              {planData.plans.map((plan, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleDaySelect(index)}
-                  className={`p-3 rounded-lg border flex flex-col items-center transition-all ${
-                    selectedDayIndex === index
-                      ? "bg-blue-50 border-blue-300 shadow-sm"
-                      : "bg-gray-50 border-gray-200 hover:bg-gray-100"
-                  }`}
-                >
-                  <span className="font-bold text-lg mb-1">
-                    Day {index + 1}
-                  </span>
-                  <span className="text-xs text-gray-600">
-                    {new Date(plan.visitDate).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "short",
-                    })}
-                  </span>
-                </button>
-              ))}
+              {/* Generate all days of the month */}
+              {(() => {
+                // Get the month from the first plan
+                const firstPlanDate = new Date(planData.plans[0].visitDate);
+                const year = firstPlanDate.getFullYear();
+                const month = firstPlanDate.getMonth();
+
+                // Get today's date for comparison
+                const today = new Date();
+                const isToday = (date) => {
+                  return (
+                    date.getDate() === today.getDate() &&
+                    date.getMonth() === today.getMonth() &&
+                    date.getFullYear() === today.getFullYear()
+                  );
+                };
+
+                // Get the number of days in the month
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                // Create array of all days in the month
+                const allDays = Array.from({ length: daysInMonth }, (_, i) => {
+                  const day = i + 1;
+                  const date = new Date(year, month, day);
+
+                  // Find if there's a plan for this day
+                  const planForDay = planData.plans.find((plan) => {
+                    const planDate = new Date(plan.visitDate);
+                    return (
+                      planDate.getDate() === day &&
+                      planDate.getMonth() === month &&
+                      planDate.getFullYear() === year
+                    );
+                  });
+
+                  return {
+                    day,
+                    date,
+                    dayName: date.toLocaleDateString("en-US", {
+                      weekday: "short",
+                    }),
+                    hasPlan: !!planForDay,
+                    planIndex: planForDay
+                      ? planData.plans.indexOf(planForDay)
+                      : null,
+                    isToday: isToday(date),
+                  };
+                });
+
+                return allDays.map((dayInfo, i) => (
+                  <button
+                    key={i}
+                    onClick={() =>
+                      dayInfo.hasPlan && handleDaySelect(dayInfo.planIndex)
+                    }
+                    className={`p-3 rounded-lg border flex flex-col items-center transition-all ${
+                      dayInfo.isToday
+                        ? "border-indigo-500 ring-2 ring-indigo-200"
+                        : dayInfo.hasPlan &&
+                          selectedDayIndex === dayInfo.planIndex
+                        ? "bg-blue-50 border-blue-300 shadow-sm"
+                        : dayInfo.hasPlan
+                        ? "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                        : "bg-gray-50 border-gray-200 opacity-70 cursor-default"
+                    }`}
+                  >
+                    <span className="text-xs text-gray-500 mb-1">
+                      {dayInfo.dayName}
+                    </span>
+                    <span
+                      className={`font-bold text-lg mb-1 ${
+                        dayInfo.isToday ? "text-indigo-600" : ""
+                      }`}
+                    >
+                      Day {dayInfo.day}
+                    </span>
+                    <span className="text-xs text-gray-600">
+                      {dayInfo.date.toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                      })}
+                    </span>
+                    {dayInfo.isToday && (
+                      <span className="mt-1 text-xs px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full">
+                        Today
+                      </span>
+                    )}
+                    {!dayInfo.hasPlan && (
+                      <span className="mt-1 text-xs px-2 py-1 bg-gray-200 text-gray-700 rounded-full">
+                        Day Off
+                      </span>
+                    )}
+                  </button>
+                ));
+              })()}
             </div>
           </div>
 
@@ -149,7 +223,11 @@ export default function MonthlyPlan({ planData, selectedPlan }) {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-xl font-bold">
-                    Day {selectedDayIndex + 1} Plan
+                    Day{" "}
+                    {new Date(
+                      planData.plans[selectedDayIndex].visitDate
+                    ).getDate()}{" "}
+                    Plan
                   </h2>
                   <p className="text-gray-600 flex items-center gap-1 mt-1">
                     <CiCalendarDate size={18} />

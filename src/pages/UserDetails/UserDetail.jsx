@@ -90,7 +90,7 @@ export default function UserDetail() {
 
         // Fetch user KPIs
         const kpisResponse = await axios.get(
-          `${base_url}/api/users/monthly-kpi-stats/${id}`,
+          `${base_url}/api/users/kpi/stats/${id}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -415,9 +415,9 @@ export default function UserDetail() {
                             </span>
                           </div>
                           <div className="mt-4">
-                            <div className="w-full bg-gray-200 rounded-full h-2.5">
+                            <div className="w-full bg-gray-200 overflow-hidden rounded-full h-2.5">
                               <div
-                                className="bg-blue-600 h-2.5 rounded-full"
+                                className="bg-blue-600  h-2.5 rounded-full"
                                 style={{
                                   width: `${currentMonthKpi.achieved}%`,
                                 }}
@@ -426,7 +426,7 @@ export default function UserDetail() {
                           </div>
                           <div className="mt-4 text-center">
                             <span
-                              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              className={`px-2 inline-flex text-xs  leading-5 font-semibold rounded-full ${
                                 currentMonthKpi.achieved >=
                                 currentMonthKpi.target
                                   ? "bg-green-100 text-green-800"
