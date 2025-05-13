@@ -22,6 +22,7 @@ import EditPlan from "../pages/EditPlan/EditPlan";
 import HolidayRequest from "../pages/HolidayRequest/HolidayRequest";
 import HolidayDetails from "../pages/HolidayDetails/HolidayDetails";
 import UserDetail from "../pages/UserDetails/UserDetail";
+import Notfound from "../pages/Notfound/Notfound";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -134,7 +135,7 @@ export default function AppRoutes() {
         <Route path="/holiday-details/:id" element={<HolidayDetails />} />
         <Route path="/user/:id" element={<UserDetail />} />
       </Route>
-      <Route path="*" element={<div>Not Found</div>} />
+      <Route path="*" element={<Notfound />} />
     </Routes>
   );
 }
