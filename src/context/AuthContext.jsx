@@ -91,14 +91,19 @@ const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    await axios.post(
-      `${base_url}/api/auth/logout`,
-      {},
-      { withCredentials: true }
-    );
-    localStorage.removeItem("token");
-    dispatch({ type: "LOGOUT" });
-    navigate("/login");
+    try {
+      await axios.post(
+        `${base_url}/api/auth/logout`,
+        {},
+        { withCredentials: true }
+      );
+    } catch (error) {
+      console.error("Logout error", error);
+    } finally {
+      localStorage.removeItem("token");
+      dispatch({ type: "LOGOUT" });
+      navigate("/login");
+    }
   };
 
   const updateUser = (userData) => {
