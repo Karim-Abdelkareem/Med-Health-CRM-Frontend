@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FiX, FiMenu } from "react-icons/fi";
+import { useAuth } from "../context/AuthContext";
 
 export default function MobileMenu({
   user,
@@ -9,6 +10,7 @@ export default function MobileMenu({
   setIsMobileMenuOpen,
 }) {
   const mobileMenuRef = useRef(null);
+  const { logout } = useAuth();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -96,7 +98,7 @@ export default function MobileMenu({
 
           <div className="mt-auto border-t border-gray-200 p-4">
             <Link
-              to="/login"
+              onClick={logout}
               className="flex items-center text-red-500 hover:text-red-700 transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >

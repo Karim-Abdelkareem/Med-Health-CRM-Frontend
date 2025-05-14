@@ -1,7 +1,6 @@
 import React, { useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
-import { useAuth } from "../../context/AuthContext";
 
 export default function MainLayout() {
   const { isAuthenticated, loading } = useAuth();
