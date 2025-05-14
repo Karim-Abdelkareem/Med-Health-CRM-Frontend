@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import useAuth from "../../utils/useAuth"; // assuming you have this hook
+import { useAuth } from "../../context/AuthContext";
 
 export default function AuthLayout() {
   const { isAuthenticated, loading } = useAuth();

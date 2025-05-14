@@ -9,7 +9,7 @@ export default function MainLayout() {
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      navigate("/login");
+      navigate("/login"); // redirect unauthenticated users
     }
   }, [loading, isAuthenticated, navigate]);
 
