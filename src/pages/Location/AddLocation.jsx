@@ -6,6 +6,8 @@ import InputField from "../../components/InputField";
 import SelectField from "../../components/SelectField";
 import locationService from "../../store/Location/locationService";
 import toast from "react-hot-toast";
+import governates from "../../data/governates.json";
+import cities from "../../data/cities.json";
 
 // Fix for Leaflet marker icon issue in React
 // You might need to adjust paths based on your project structure
@@ -34,51 +36,17 @@ export default function AddLocation() {
   const [address, setAddress] = useState("");
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
+  const [village, setVillage] = useState("");
   const [position, setPosition] = useState(null);
   const [isFormValid, setIsFormValid] = useState(false);
 
   const mapRef = useRef(null);
 
-  // Sample data for states and cities
-  // In a real app, you would fetch this from an API
-  const states = [
-    { value: "Faiyum", label: "Faiyum" },
-    { value: "BaniSewif", label: "Bani Sewif" },
-    { value: "Minya", label: "Minya" },
-    { value: "Asyut", label: "Asyut" },
-    { value: "Sohag", label: "Sohag" },
-    { value: "Qena", label: "Qena" },
-    { value: "Luxor", label: "Luxor" },
-    { value: "Aswan", label: "Aswan" },
-    // Add more states as needed
-  ];
+  const states = governates.gov.map((g) => ({
+    value: g.governorate_name_en.replace(/\s+/g, ""),
+    label: g.governorate_name_en,
+  }));
 
-  // Cities would be dynamically loaded based on state selection
-  const citiesByState = {
-    Faiyum: [
-      { value: "birmingham", label: "Birmingham" },
-      { value: "montgomery", label: "Montgomery" },
-      { value: "mobile", label: "Mobile" },
-    ],
-    BaniSewif: [
-      { value: "anchorage", label: "Anchorage" },
-      { value: "fairbanks", label: "Fairbanks" },
-      { value: "juneau", label: "Juneau" },
-    ],
-    Minya: [
-      { value: "phoenix", label: "Phoenix" },
-      { value: "tucson", label: "Tucson" },
-      { value: "mesa", label: "Mesa" },
-    ],
-    Sohag: [
-      { value: "phoenix", label: "Phoenix" },
-      { value: "tucson", label: "Tucson" },
-      { value: "mesa", label: "Mesa" },
-    ],
-    // Add more cities for other states
-  };
-
-  // Default map position (center of the US)
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -95,20 +63,34 @@ export default function AddLocation() {
     );
   }, []);
 
-  // Available cities based on selected state
   const [availableCities, setAvailableCities] = useState([]);
 
-  // Update available cities when state changes
   useEffect(() => {
-    if (state && citiesByState[state]) {
-      setAvailableCities(citiesByState[state]);
-      setCity(""); // Reset city when state changes
+    if (state) {
+      // Find the governorate ID based on the selected state
+      const selectedGov = governates.gov.find(
+        (g) => g.governorate_name_en.replace(/\s+/g, "") === state
+      );
+
+      if (selectedGov) {
+        // Filter cities by the selected governorate ID
+        const filteredCities = cities.cities
+          .filter((c) => c.governorate_id === selectedGov.id)
+          .map((c) => ({
+            value: c.city_name_en, // Use city_name_en as value instead of id
+            label: c.city_name_en,
+          }));
+
+        setAvailableCities(filteredCities);
+        setCity(""); // Reset city when state changes
+      } else {
+        setAvailableCities([]);
+      }
     } else {
       setAvailableCities([]);
     }
   }, [state]);
 
-  // Form validation
   useEffect(() => {
     setIsFormValid(
       locationName.trim() !== "" &&
@@ -130,19 +112,22 @@ export default function AddLocation() {
       address: address,
       state: state,
       city: city,
+      village: village,
       latitude: position[0],
       longitude: position[1],
     };
+    console.log(locationData);
 
     // Here you would typically send the data to your backend
     const response = await locationService.createLocation(locationData);
-    if (response.status === 201) {
       toast.success("Location added successfully");
+    if (response.status === 201) {
       // Reset form fields
       setLocationName("");
       setAddress("");
       setState("");
       setCity("");
+      setVillage("");
     }
   };
 
@@ -210,12 +195,24 @@ export default function AddLocation() {
                   <SelectField
                     label="City"
                     value={city}
-                    onChange={(e) => setCity(e.target.value)}
+                    onChange={(e) => {
+                      setCity(e.target.value);
+                    }}
                     options={availableCities}
                     placeholder={state ? "Select city" : "Select state first"}
                     required={true}
                   />
                 </div>
+
+                {city && (
+                  <InputField
+                    label="Village"
+                    value={village}
+                    onChange={(e) => setVillage(e.target.value)}
+                    placeholder="Enter village name (optional)"
+                    required={false}
+                  />
+                )}
               </div>
 
               <div className="bg-gray-50 p-6 rounded-lg">
@@ -300,6 +297,7 @@ export default function AddLocation() {
                 setAddress("");
                 setState("");
                 setCity("");
+                setVillage("");
                 setPosition(null);
               }}
             >

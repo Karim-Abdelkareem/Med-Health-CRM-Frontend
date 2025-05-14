@@ -70,7 +70,9 @@ const AuthProvider = ({ children }) => {
   const login = async (data) => {
     try {
       setLoading(true);
-      const response = await axios.post(`${base_url}/api/auth/login`, data);
+      const response = await axios.post(`${base_url}/api/auth/login`, data, {
+        withCredentials: true,
+      });
       const { access_token } = response.data.data;
 
       if (!isTokenValid(access_token)) {
@@ -82,14 +84,18 @@ const AuthProvider = ({ children }) => {
       dispatch({ type: "LOGIN", payload: user });
       navigate("/");
     } catch (error) {
-      console.error("Login error:", error);
-      setErrors(error.response?.data?.message || "Login failed");
+      setErrors(error.response?.data?.error.message || "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await axios.post(
+      `${base_url}/api/auth/logout`,
+      {},
+      { withCredentials: true }
+    );
     localStorage.removeItem("token");
     dispatch({ type: "LOGOUT" });
     navigate("/login");

@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  useMapEvents,
+  useMap,
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import SelectField from "../../components/SelectField";
 import InputField from "../../components/InputField";
 import locationService from "../../store/Location/locationService";
-import { set } from "react-hook-form";
 import toast from "react-hot-toast";
+import governates from "../../data/governates.json";
+import cities from "../../data/cities.json";
 
 // Leaflet icon fix
 delete L.Icon.Default.prototype._getIconUrl;
@@ -17,13 +24,28 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
 });
 
+// Updated LocationMarker component with MapController
 const LocationMarker = ({ position, setPosition }) => {
-  useMapEvents({
+  const map = useMapEvents({
     click(e) {
       setPosition([e.latlng.lat, e.latlng.lng]);
     },
   });
+
   return position ? <Marker position={position} /> : null;
+};
+
+// New component to handle map centering
+const MapController = ({ position }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (position) {
+      map.flyTo(position, 13);
+    }
+  }, [position, map]);
+
+  return null;
 };
 
 const EditLocation = () => {
@@ -34,9 +56,11 @@ const EditLocation = () => {
   const [address, setAddress] = useState("");
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
+  const [village, setVillage] = useState("");
   const [position, setPosition] = useState(null);
   const [availableCities, setAvailableCities] = useState([]);
   const [locations, setLocations] = useState([]);
+
   // fetch locations
   const fetchLocations = async () => {
     try {
@@ -53,67 +77,64 @@ const EditLocation = () => {
     fetchLocations();
   }, []);
 
-  // In a real app, you would fetch this from an API
-  const states = [
-    { value: "Faiyum", label: "Faiyum" },
-    { value: "BaniSewif", label: "Bani Sewif" },
-    { value: "Minya", label: "Minya" },
-    { value: "Asyut", label: "Asyut" },
-    { value: "Sohag", label: "Sohag" },
-    { value: "Qena", label: "Qena" },
-    { value: "Luxor", label: "Luxor" },
-    { value: "Aswan", label: "Aswan" },
-    // Add more states as needed
-  ];
+  const states = governates.gov.map((g) => ({
+    value: g.governorate_name_en.replace(/\s+/g, ""),
+    label: g.governorate_name_en,
+  }));
 
-  // Cities would be dynamically loaded based on state selection
-  const citiesByState = {
-    Faiyum: [
-      { value: "birmingham", label: "Birmingham" },
-      { value: "montgomery", label: "Montgomery" },
-      { value: "mobile", label: "Mobile" },
-    ],
-    BaniSewif: [
-      { value: "anchorage", label: "Anchorage" },
-      { value: "fairbanks", label: "Fairbanks" },
-      { value: "juneau", label: "Juneau" },
-    ],
-    Minya: [
-      { value: "phoenix", label: "Phoenix" },
-      { value: "tucson", label: "Tucson" },
-      { value: "mesa", label: "Mesa" },
-    ],
-    Sohag: [
-      { value: "phoenix", label: "Phoenix" },
-      { value: "tucson", label: "Tucson" },
-      { value: "mesa", label: "Mesa" },
-    ],
-    // Add more cities for other states
-  };
+  useEffect(() => {
+    if (state) {
+      // Find the governorate ID based on the selected state
+      const selectedGov = governates.gov.find(
+        (g) => g.governorate_name_en.replace(/\s+/g, "") === state
+      );
+
+      if (selectedGov) {
+        // Filter cities by the selected governorate ID
+        const filteredCities = cities.cities
+          .filter((c) => c.governorate_id === selectedGov.id)
+          .map((c) => ({
+            value: c.city_name_en,
+            label: c.city_name_en,
+          }));
+
+        setAvailableCities(filteredCities);
+        setCity(""); // Reset city when state changes
+      } else {
+        setAvailableCities([]);
+      }
+    } else {
+      setAvailableCities([]);
+    }
+  }, [state]);
 
   useEffect(() => {
     if (selectedId) {
       const loc = locations.find((l) => l._id === selectedId);
       if (loc) {
         setSelectedLocation(loc);
+
         setLocationName(loc.locationName);
         setAddress(loc.address);
         setState(loc.state);
-        setCity(loc.city);
-        setPosition([loc.latitude, loc.longitude]);
       }
     }
-  }, [selectedId]);
+  }, [selectedId, locations]);
 
   useEffect(() => {
-    if (state && citiesByState[state]) {
-      setAvailableCities(citiesByState[state]);
-    } else {
-      setAvailableCities([]);
-    }
-  }, [state]);
+    if (selectedLocation && state && availableCities.length > 0) {
+      // Now that we have the availableCities, we can set the city
+      setCity(selectedLocation.city);
+      setVillage(selectedLocation.village || "");
 
-  const handleUpdate = () => {
+      // Set the position with coordinates from the selected location
+      if (selectedLocation.latitude && selectedLocation.longitude) {
+        setPosition([selectedLocation.latitude, selectedLocation.longitude]);
+      }
+    }
+  }, [selectedLocation, state, availableCities]);
+
+  const handleUpdate = async () => {
     if (
       !selectedId ||
       !locationName ||
@@ -121,20 +142,31 @@ const EditLocation = () => {
       !state ||
       !city ||
       !position
-    )
+    ) {
+      toast.error("Please fill all required fields");
       return;
-    const updated = {
-      id: selectedId,
-      name: locationName,
-      address,
-      state,
-      city,
-      latitude: position[0],
-      longitude: position[1],
-    };
-    // update location
-    locationService.updateLocation(selectedId, updated);
-    toast.success("Location updated!");
+    }
+
+    try {
+      const updated = {
+        id: selectedId,
+        name: locationName,
+        address,
+        state,
+        city,
+        village,
+        latitude: position[0],
+        longitude: position[1],
+      };
+
+      // update location
+      await locationService.updateLocation(selectedId, updated);
+      toast.success("Location updated successfully!");
+      fetchLocations(); // Refresh locations after update
+    } catch (error) {
+      toast.error("Failed to update location");
+      console.error("Error updating location:", error);
+    }
   };
 
   //Delete location
@@ -148,9 +180,11 @@ const EditLocation = () => {
       setAddress("");
       setState("");
       setCity("");
+      setVillage("");
       setPosition(null);
       fetchLocations();
     } catch (err) {
+      toast.error("Failed to delete location");
       console.error("Error deleting location:", err);
     }
   };
@@ -171,6 +205,7 @@ const EditLocation = () => {
           placeholder="Choose a location"
           required
         />
+
         {selectedLocation && (
           <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -201,7 +236,17 @@ const EditLocation = () => {
                 options={availableCities}
                 placeholder="Select city"
                 required
+                disabled={availableCities.length === 0}
               />
+              {city && (
+                <InputField
+                  label="Village"
+                  value={village}
+                  onChange={(e) => setVillage(e.target.value)}
+                  placeholder="Enter village name (optional)"
+                  required={false}
+                />
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <InputField
                   label="Latitude"
@@ -232,24 +277,25 @@ const EditLocation = () => {
 
             <div className="h-96 rounded-lg overflow-hidden border border-gray-300">
               <MapContainer
-                center={position || [37.0902, -95.7129]}
-                zoom={position ? 13 : 4}
+                center={position || [30.0444, 31.2357]} // Default to Cairo if no position
+                zoom={position ? 13 : 6}
                 style={{ height: "100%", width: "100%" }}
               >
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 <LocationMarker position={position} setPosition={setPosition} />
+                <MapController position={position} />
               </MapContainer>
             </div>
 
             <div className="col-span-2 gap-2 flex justify-end mt-4">
               <button
-                onClick={() => onDelete(selectedId)}
+                onClick={onDelete}
                 className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
               >
                 Delete Location
               </button>
               <button
-                onClick={() => handleUpdate()}
+                onClick={handleUpdate}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Update Location

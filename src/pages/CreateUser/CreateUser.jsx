@@ -16,7 +16,6 @@ import { useAuth } from "../../context/AuthContext";
 
 export default function CreateUser() {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const { user } = useAuth();
 
   // Form state
@@ -46,7 +45,7 @@ export default function CreateUser() {
   // Filter role options based on logged-in user's role
   const getFilteredRoleOptions = () => {
     const userRoleIndex = roleHierarchy.indexOf(user?.role);
-    
+
     // Define all possible role options
     const allRoleOptions = [
       { value: "R", label: "Representative" },
@@ -56,14 +55,14 @@ export default function CreateUser() {
       { value: "HR", label: "HR" },
       { value: "GM", label: "General Manager" },
     ];
-    
+
     // If user is GM or HR, show all roles
     if (user?.role === "GM" || user?.role === "HR") {
       return allRoleOptions;
     }
-    
+
     // Otherwise, filter roles based on hierarchy
-    return allRoleOptions.filter(role => {
+    return allRoleOptions.filter((role) => {
       const roleIndex = roleHierarchy.indexOf(role.value);
       return roleIndex < userRoleIndex; // Only show roles with lower permission level
     });
@@ -110,14 +109,14 @@ export default function CreateUser() {
   // Form validation
   useEffect(() => {
     const { name, email, password, role } = formData;
-    
+
     // Basic validation
-    const isValid = 
-      name.trim() !== "" && 
-      email.trim() !== "" && 
-      password.trim() !== "" && 
+    const isValid =
+      name.trim() !== "" &&
+      email.trim() !== "" &&
+      password.trim() !== "" &&
       role !== "";
-    
+
     // Additional validation for specific roles
     if (role === "R" && (!formData.LM || !formData.governate)) {
       setIsFormValid(false);
@@ -125,7 +124,8 @@ export default function CreateUser() {
       setIsFormValid(false);
     } else if (role === "DM" && !formData.governate) {
       setIsFormValid(false);
-    } else if (role === "Area" && !formData.LM) { // Add validation for Area role
+    } else if (role === "Area" && !formData.LM) {
+      // Add validation for Area role
       setIsFormValid(false);
     } else {
       setIsFormValid(isValid);
@@ -170,9 +170,9 @@ export default function CreateUser() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!isFormValid) return;
-    
+
     // Create user data object based on role
     const userData = {
       name: formData.name,
@@ -180,7 +180,7 @@ export default function CreateUser() {
       password: formData.password,
       role: formData.role,
     };
-    
+
     // Add role-specific fields
     if (formData.role === "R") {
       userData.LM = formData.LM;
@@ -190,14 +190,18 @@ export default function CreateUser() {
     } else if (formData.role === "Area") {
       userData.LM = formData.LM; // Add Line Manager for Area role
     }
-    
+
     try {
       setIsSaving(true);
       await userService.createUser(userData);
       toast.success("User created successfully");
       navigate("/users");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to create user");
+      console.log(error);
+
+      toast.error(
+        error.response?.data?.error.message || "Failed to create user"
+      );
     } finally {
       setIsSaving(false);
     }
@@ -334,7 +338,9 @@ export default function CreateUser() {
               </div>
 
               {/* Line Manager field */}
-              {(formData.role === "R" || formData.role === "DM" || formData.role === "Area") && (
+              {(formData.role === "R" ||
+                formData.role === "DM" ||
+                formData.role === "Area") && (
                 <div className="mt-8">
                   <label className="flex items-center text-gray-700 font-medium mb-2">
                     <FiUsers className="mr-2" />

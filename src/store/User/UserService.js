@@ -100,6 +100,20 @@ const userService = {
     );
     return response;
   },
+
+  updateUserPassword: async (userId, passwordData) => {
+    const token = getAuthToken();
+    const response = await axios.patch(
+      `${API_URL}/change-password/${userId}`,
+      passwordData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response;
+  },
 };
 
 export default userService;

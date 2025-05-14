@@ -20,7 +20,7 @@ import { FaHistory } from "react-icons/fa";
 import { IoPersonOutline } from "react-icons/io5";
 
 export default function Sidebar() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { unreadCount } = useNotifications();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -317,7 +317,7 @@ export default function Sidebar() {
                   Profile
                 </Link>
                 <Link
-                  to={"/login"}
+                  onClick={logout}
                   className="block px-4 py-2 text-sm hover:bg-gray-100 text-red-500"
                 >
                   Sign out
