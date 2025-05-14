@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
+import useAuth from "../../utils/useAuth";
 
 export default function MainLayout() {
   const { isAuthenticated, loading } = useAuth();
@@ -8,7 +9,7 @@ export default function MainLayout() {
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      navigate("/login"); 
+      navigate("/login");
     }
   }, [loading, isAuthenticated, navigate]);
 
