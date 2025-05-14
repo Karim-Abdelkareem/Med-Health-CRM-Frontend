@@ -70,9 +70,7 @@ const AuthProvider = ({ children }) => {
   const login = async (data) => {
     try {
       setLoading(true);
-      const response = await axios.post(`${base_url}/api/auth/login`, data, {
-        withCredentials: true,
-      });
+      const response = await axios.post(`${base_url}/api/auth/login`, data);
       const { access_token } = response.data.data;
 
       if (!isTokenValid(access_token)) {
@@ -91,19 +89,9 @@ const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    try {
-      await axios.post(
-        `${base_url}/api/auth/logout`,
-        {},
-        { withCredentials: true }
-      );
-    } catch (error) {
-      console.error("Logout error", error);
-    } finally {
-      localStorage.removeItem("token");
-      dispatch({ type: "LOGOUT" });
-      navigate("/login");
-    }
+    localStorage.removeItem("token");
+    dispatch({ type: "LOGOUT" });
+    navigate("/login");
   };
 
   const updateUser = (userData) => {
