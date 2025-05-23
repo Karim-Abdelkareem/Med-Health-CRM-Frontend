@@ -98,11 +98,9 @@ export default function MobileMenu({
 
           <div className="mt-auto border-t border-gray-200 p-4">
             <Link
+              onClick={logout}
               className="flex items-center text-red-500 hover:text-red-700 transition-colors"
-              onClick={() => {
-                logout();
-                setIsMobileMenuOpen(false);
-              }}
+              onClick={() => setIsMobileMenuOpen(false)}
             >
               <span className="mr-2">Sign out</span>
             </Link>
