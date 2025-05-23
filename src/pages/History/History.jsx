@@ -39,8 +39,9 @@ export default function History() {
       );
       setPlans(response.data);
       setCurrentPage(1); // Reset to first page when new data is loaded
-    } catch {
-      toast.error("Failed to load plans history");
+    } catch (error) {
+      console.log(error);
+      toast.error(error.response.data.error.message);
     } finally {
       setIsLoading(false);
     }
@@ -198,7 +199,6 @@ export default function History() {
                                   locationData.planId,
                                   locationData.location._id
                                 );
-                                console.log(locationData.location._id);
                               }}
                               className="inline-flex items-center justify-center w-8 h-8 text-gray-600 hover:text-blue-600 transition-colors duration-200"
                             >

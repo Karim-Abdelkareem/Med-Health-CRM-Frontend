@@ -11,27 +11,44 @@ export default function PlanModal({
   setIsOpen,
   fetchPlanData,
 }) {
-  const [startDate, setStartDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-  const [endDate, setEndDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  // Get first and last day of current month
+  const getFirstDayOfMonth = () => {
+    const date = new Date();
+    return new Date(date.getFullYear(), date.getMonth(), 1)
+      .toISOString()
+      .split("T")[0];
+  };
+
+  const getLastDayOfMonth = () => {
+    const date = new Date();
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0)
+      .toISOString()
+      .split("T")[0];
+  };
+
+  const [startDate, setStartDate] = useState(getFirstDayOfMonth());
+  const [endDate, setEndDate] = useState(getLastDayOfMonth());
   const [regions, setRegions] = useState([
     {
       locations: [],
-      visitDate: new Date().toISOString().split("T")[0],
+      visitDate: getFirstDayOfMonth(),
       dropdownOpen: false,
     },
   ]);
   const [notes, setNotes] = useState("");
+
   const addRegion = () => {
+    const lastRegion = regions[regions.length - 1];
+    const lastDate = new Date(lastRegion.visitDate);
+    const nextDate = new Date(lastDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+
     setRegions([
       ...regions,
       {
         locations: [],
-        visitDate: new Date().toISOString().split("T")[0],
-        dropdownOpen: false, // <-- Add this
+        visitDate: nextDate.toISOString().split("T")[0],
+        dropdownOpen: false,
       },
     ]);
   };
@@ -58,7 +75,6 @@ export default function PlanModal({
     };
     createPlan(planData);
     toast.success("Plan created successfully");
-
     setIsOpen(false);
   };
 
@@ -90,73 +106,79 @@ export default function PlanModal({
         isOpen ? "fixed" : "hidden"
       } top-0 left-0 w-full h-full bg-black/50 flex items-center justify-center z-50`}
     >
-      <div className="bg-slate-50 absolute w-6/12 max-w-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 rounded-xl shadow-lg">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">{planOption}</h1>
+      <div className="bg-white absolute w-11/12 md:w-8/12 max-w-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 rounded-xl shadow-lg">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">{planOption}</h1>
           <IoClose
             onClick={() => setIsOpen(false)}
             size={24}
-            className="cursor-pointer text-red-600"
+            className="cursor-pointer text-gray-500 hover:text-red-600 transition-colors"
           />
         </div>
 
-        <p className="text-sm text-gray-800 mb-4">
-          Add new plan to your <span className="font-medium">{planType}</span>{" "}
-          plan
+        <p className="text-sm text-gray-600 mb-2">
+          Add new plan to your{" "}
+          <span className="font-medium text-blue-600">{planType}</span> plan
         </p>
 
-        <p className="font-bold text-gray-800 mb-4">
+        <p className="font-medium text-gray-800 mb-6">
           Note:{" "}
-          <span className="text-red-500 font-medium text-sm">
+          <span className="text-red-500 text-sm">
             You Must Complete 12 Daily Task To Complete The KPI
           </span>
         </p>
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-4 max-h-[70vh] overflow-y-auto pr-1"
+          className="space-y-6 max-h-[70vh] overflow-y-auto pr-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         >
-          <div>
-            <div className="flex items-center gap-2 mt-2">
-              <div className="flex flex-1 flex-col">
-                <label className="text-sm font-medium">Start Date</label>
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <label className="text-sm font-medium text-gray-700">
+                  Start Date
+                </label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full border rounded p-2 mt-1 text-sm"
+                  className="w-full border border-gray-300 rounded-lg p-2 mt-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
-              <div className="flex flex-1 flex-col">
-                <label className="text-sm font-medium">End Date</label>
+              <div className="flex-1">
+                <label className="text-sm font-medium text-gray-700">
+                  End Date
+                </label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full border rounded p-2 mt-1 text-sm"
+                  className="w-full border border-gray-300 rounded-lg p-2 mt-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
             </div>
           </div>
 
-          <div>
-            <label className="text-sm font-medium">Locations</label>
+          <div className="space-y-4">
+            <label className="text-sm font-medium text-gray-700">
+              Day Plans
+            </label>
             {regions.map((region, index) => (
-              <div key={index} className="flex flex-col gap-2 mt-2">
-                <div className="flex items-center gap-2 flex-1">
+              <div key={index} className="bg-gray-50 p-4 rounded-lg space-y-3">
+                <div className="flex items-center gap-3">
                   <div
                     onClick={() =>
                       updateRegion(index, "dropdownOpen", !region.dropdownOpen)
                     }
-                    className="p-2 rounded border flex justify-between items-center flex-1"
+                    className="flex-1 p-2 rounded-lg border border-gray-300 flex justify-between items-center cursor-pointer hover:border-blue-500 transition-colors"
                   >
-                    <span>Locations</span>
+                    <span className="text-gray-700">Select Locations</span>
                     <IoChevronDown
                       className={`${
                         region.dropdownOpen ? "rotate-180" : ""
-                      } delay-150 duration-150`}
+                      } text-gray-500 transition-transform duration-200`}
                     />
                   </div>
 
@@ -166,26 +188,27 @@ export default function PlanModal({
                     onChange={(e) =>
                       updateRegion(index, "visitDate", e.target.value)
                     }
-                    className="w-32 border rounded p-2 text-sm"
+                    className="w-40 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
                   {regions.length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeRegion(index)}
-                      className="text-red-500 text-lg"
+                      className="text-red-500 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors"
                     >
-                      ×
+                      <IoClose size={20} />
                     </button>
                   )}
                 </div>
+
                 {region.dropdownOpen && (
-                  <div className="w-full bg-white border rounded mt-2 shadow-lg p-2">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                  <div className="bg-white border border-gray-200 rounded-lg mt-2 shadow-sm p-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                       {locationOptions.map((option) => (
                         <label
                           key={option._id}
-                          className="flex items-center space-x-2 p-2 cursor-pointer"
+                          className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
                         >
                           <input
                             type="checkbox"
@@ -205,22 +228,25 @@ export default function PlanModal({
 
                               updateRegion(index, "locations", updated);
                             }}
-                            className="accent-blue-500"
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                           />
-                          <span>{option.locationName}</span>
+                          <span className="text-sm text-gray-700">
+                            {option.locationName}
+                          </span>
                         </label>
                       ))}
                     </div>
                   </div>
                 )}
+
                 {region.locations?.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="flex flex-wrap gap-2 mt-3">
                     {region.locations.map((locId) => {
                       const loc = locationOptions.find((l) => l._id === locId);
                       return (
                         <div
                           key={locId}
-                          className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm border border-blue-500"
+                          className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm border border-blue-200"
                         >
                           {loc?.locationName || "Unknown"}
                         </div>
@@ -230,32 +256,44 @@ export default function PlanModal({
                 )}
               </div>
             ))}
-
-            <button
-              type="button"
-              onClick={addRegion}
-              className="mt-2 text-blue-600 text-sm"
-            >
-              + Add Region
-            </button>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium">Notes</label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              className="w-full border rounded p-2 mt-1 text-sm"
-            />
           </div>
 
           <button
-            type="submit"
-            className="w-full bg-blue-600 text-white p-2 rounded font-medium hover:bg-blue-700"
+            type="button"
+            onClick={addRegion}
+            className="w-full bg-gray-100 text-gray-700 p-3 rounded-lg font-medium hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 flex items-center justify-center gap-2"
           >
-            Save Plan
+            <span className="text-lg">+</span> Add New Day Plan
           </button>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700">Notes</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              className="w-full border border-gray-300 rounded-lg p-2 mt-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Add any additional notes here..."
+            />
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                className="flex-1 bg-blue-600 text-white p-3 rounded-lg font-medium hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                Save Plan
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="flex-1 bg-gray-100 text-gray-700 p-3 rounded-lg font-medium hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </form>
       </div>
     </div>

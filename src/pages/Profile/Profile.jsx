@@ -28,6 +28,25 @@ export default function Profile() {
   // Watch password form values
   const passwordValues = passwordForm.watch();
 
+  const formatRole = (role) => {
+    switch (role) {
+      case "R":
+        return "Representative";
+      case "DM":
+        return "District Manager";
+      case "LM":
+        return "Line Manager";
+      case "Area":
+        return "Area Sales Manager";
+      case "HR":
+        return "HR";
+      case "GM":
+        return "General Manager";
+      default:
+        return "Guest";
+    }
+  };
+
   // Check if profile form has changed
   useEffect(() => {
     if (originalData && profileValues) {
@@ -251,7 +270,7 @@ export default function Profile() {
                       </label>
                       <input
                         type="text"
-                        value={user?.role || ""}
+                        value={formatRole(user?.role) || ""}
                         disabled
                         className="w-full px-4 py-3 border-b-2 border-gray-300 focus:outline-none bg-gray-100 text-gray-600"
                       />

@@ -36,6 +36,17 @@ export default function CreatePlan() {
     return daysUntilEndOfMonth <= 7;
   };
 
+  // Function to check if user can create or edit plan
+  const canCreateOrEditPlan = () => {
+    // Allow if it's the last week of the month
+    if (isLastWeekOfMonth()) return true;
+
+    // Allow if user has no plans
+    if (!planData.plans || planData.plans.length === 0) return true;
+
+    return false;
+  };
+
   const plans = [
     { label: "Monthly Plan", value: "monthly" },
     { label: "Weekly Plan", value: "weekly" },
@@ -73,7 +84,6 @@ export default function CreatePlan() {
       default:
         setSelectedPlan("monthly");
         fetchPlanData();
-
         break;
     }
   }, [selectedPlan]);
@@ -104,14 +114,53 @@ export default function CreatePlan() {
     <div className="mx-6 space-y-4 my-6">
       <h1 className="text-3xl mx-2 font-bold">Create Plan</h1>
 
+      {!canCreateOrEditPlan() && (
+        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mx-2">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-blue-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-blue-700">
+                {planData.plans?.length > 0
+                  ? "You can only create or edit plans during the last week of the month."
+                  : "You can create your first plan now."}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mx-2">
         {plans.map((plan) => (
           <PlanCard
             key={plan.value}
             plan={plan}
-            disabled={!planData.plans?.length > 0}
+            disabled={
+              !canCreateOrEditPlan() ||
+              (plan.value !== "monthly" &&
+                (!planData.plans || planData.plans.length === 0))
+            }
             isSelected={selectedPlan === plan.value}
-            onClick={() => setSelectedPlan(plan.value)}
+            onClick={() => {
+              if (
+                canCreateOrEditPlan() &&
+                (plan.value === "monthly" ||
+                  (planData.plans && planData.plans.length > 0))
+              ) {
+                setSelectedPlan(plan.value);
+              }
+            }}
           />
         ))}
       </div>
@@ -119,6 +168,12 @@ export default function CreatePlan() {
       <div className="mx-2 mt-4 text-gray-600">
         Selected Plan:{" "}
         <span className="font-medium capitalize">{selectedPlan}</span>
+        {selectedPlan !== "monthly" &&
+          (!planData.plans || planData.plans.length === 0) && (
+            <span className="text-red-500 text-sm ml-2">
+              (You need to create a monthly plan first)
+            </span>
+          )}
       </div>
 
       {/* Plan Form */}
@@ -127,14 +182,12 @@ export default function CreatePlan() {
           <h2 className="text-2xl font-semibold mb-4">Add Your Plan</h2>
           <button
             onClick={() => setIsOpen(true)}
-            disabled={planData.plans?.length > 0 && !isLastWeekOfMonth()}
+            disabled={!canCreateOrEditPlan()}
             className={`bg-blue-500 hover:bg-blue-600 text-white font-semibold mr-6 py-2 px-4 rounded ${
-              planData.plans?.length > 0 && !isLastWeekOfMonth()
-                ? "opacity-50 cursor-not-allowed"
-                : ""
+              !canCreateOrEditPlan() ? "opacity-50 cursor-not-allowed" : ""
             }`}
             title={
-              planData.plans?.length > 0 && !isLastWeekOfMonth()
+              !canCreateOrEditPlan()
                 ? "You can only add a new plan in the last 7 days of the month"
                 : "Add a new plan"
             }
