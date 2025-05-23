@@ -165,7 +165,6 @@ const userSlice = createSlice({
 
       // getUsersByRole
       .addCase(getUsersByRole.fulfilled, (state, action) => {
-        console.log("Fetched users by role:", action.payload); // Log the payload
         state.users = action.payload;
       });
   },

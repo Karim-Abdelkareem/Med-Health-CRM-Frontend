@@ -21,8 +21,7 @@ export default function AddNotesModal({ isOpen, onClose, plan, onSave }) {
       );
       onSave();
     } catch (error) {
-      console.error("Error adding notes:", error);
-      toast.error("Failed to add notes");
+      toast.error("Failed to add notes", error);
     } finally {
       setIsSubmitting(false);
     }

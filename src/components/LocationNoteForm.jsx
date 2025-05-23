@@ -7,13 +7,10 @@ const LocationNoteForm = ({ planId, locationId, onNoteSaved }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Add debug logs
-  console.log("LocationNoteForm rendered with:", { planId, locationId });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!note.trim()) return;
-
-    console.log("Submitting note:", { planId, locationId, note });
 
     try {
       setIsSubmitting(true);
@@ -23,8 +20,7 @@ const LocationNoteForm = ({ planId, locationId, onNoteSaved }) => {
       setNote(""); // Clear the input
       if (onNoteSaved) onNoteSaved(); // Callback to refresh data
     } catch (error) {
-      console.error("Error adding note:", error);
-      toast.error("Failed to add note");
+      toast.error("Failed to add note", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -32,7 +28,10 @@ const LocationNoteForm = ({ planId, locationId, onNoteSaved }) => {
 
   // Make sure the form is visible and styled properly
   return (
-    <form onSubmit={handleSubmit} className="mt-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+    <form
+      onSubmit={handleSubmit}
+      className="mt-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm"
+    >
       <div className="flex flex-col space-y-2">
         <label
           htmlFor="locationNote"
@@ -63,4 +62,3 @@ const LocationNoteForm = ({ planId, locationId, onNoteSaved }) => {
 };
 
 export default LocationNoteForm;
-

@@ -299,8 +299,6 @@ export default function UserEdit() {
       setCurrentUserPassword("");
       setShowPasswordModal(false);
     } catch (error) {
-      console.log(error);
-
       toast.error(
         error.response?.data?.error.message || "Failed to update password"
       );

@@ -14,7 +14,6 @@ const fetchLocationName = (lat, lng, setLocationName) => {
       setLocationName(location);
     })
     .catch((err) => {
-      console.warn("Error fetching location name:", err);
       setLocationName("Unknown location");
     });
 };
@@ -47,8 +46,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelect }) {
         fetchLocationName(userLoc[0], userLoc[1], setLocationName); // Fetch location name
       },
       (err) => {
-        console.warn("Geolocation error:", err.message);
-        // Fallback to Cairo if geolocation fails
+        console.error(err);
       }
     );
   }, [isOpen]);

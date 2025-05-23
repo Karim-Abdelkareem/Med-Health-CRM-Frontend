@@ -83,7 +83,6 @@ export default function Profile() {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log(response.data.data);
 
       setProfileData(response.data.data);
       setOriginalData(response.data.data);
@@ -127,7 +126,6 @@ export default function Profile() {
       fetchProfileData();
       setProfileChanged(false);
     } catch (error) {
-      console.log(error);
       toast.error(error.response?.data?.message || "Failed to update profile");
     } finally {
       setProfileLoading(false);
@@ -156,7 +154,6 @@ export default function Profile() {
       passwordForm.reset();
       setPasswordChanged(false);
     } catch (error) {
-      console.log(error);
       toast.error(error.response?.data?.message || "Failed to change password");
     } finally {
       setPasswordLoading(false);

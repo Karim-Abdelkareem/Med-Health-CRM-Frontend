@@ -116,11 +116,10 @@ export default function AddLocation() {
       latitude: position[0],
       longitude: position[1],
     };
-    console.log(locationData);
 
     // Here you would typically send the data to your backend
     const response = await locationService.createLocation(locationData);
-      toast.success("Location added successfully");
+    toast.success("Location added successfully");
     if (response.status === 201) {
       // Reset form fields
       setLocationName("");

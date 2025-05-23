@@ -87,7 +87,7 @@ export default function PlanModal({
         setLocationOptions(response.data.data);
       }
     } catch (error) {
-      console.error("Failed to fetch locations:", error);
+      console.error(error);
     }
   };
 

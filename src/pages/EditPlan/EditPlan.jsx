@@ -31,7 +31,6 @@ const EditPlan = () => {
       setIsLoading(true);
       const response = await planService.getPlanById(id);
       setPlan(response);
-      console.log("Plan data:", response);
 
       // Set form states with existing data
       setPlanNotes(response.notes || "");
@@ -39,11 +38,9 @@ const EditPlan = () => {
       // Handle locations based on the plan structure
       const regions =
         response.region || response.plans || response.locations || [];
-      console.log("Regions/locations:", regions);
 
       const mappedLocations = regions.map((region) => {
         // Debug the region structure
-        console.log("Processing region:", region);
 
         // Determine the location ID - it could be in various places
         const locationId =
@@ -57,8 +54,6 @@ const EditPlan = () => {
             region.location) ||
           // If it's just a string ID directly on the region
           region._id;
-
-        console.log("Determined locationId:", locationId);
 
         return {
           id: region._id || `temp-${Date.now()}`,
@@ -75,7 +70,6 @@ const EditPlan = () => {
         };
       });
 
-      console.log("Mapped locations:", mappedLocations);
       setLocations(mappedLocations);
     } catch (error) {
       console.error("Error fetching plan details:", error);
@@ -90,7 +84,6 @@ const EditPlan = () => {
       const response = await locationService.getAllLocations();
 
       if (response.status === 200) {
-        console.log("Available locations:", response.data.data);
         setAvailableLocations(response.data.data);
       }
     } catch (error) {
@@ -103,10 +96,6 @@ const EditPlan = () => {
   const handleLocationChange = (index, field, value) => {
     const updatedLocations = [...locations];
     updatedLocations[index] = { ...updatedLocations[index], [field]: value };
-    console.log(
-      `Updated location at index ${index}, field ${field}:`,
-      updatedLocations[index]
-    );
     setLocations(updatedLocations);
   };
 
@@ -299,7 +288,6 @@ const EditPlan = () => {
                         value={location.locationId || ""}
                         onChange={(e) => {
                           const selectedId = e.target.value;
-                          console.log("Selected ID:", selectedId);
 
                           if (!selectedId) {
                             // Handle clearing the selection
@@ -320,7 +308,6 @@ const EditPlan = () => {
                           );
 
                           if (selectedLocation) {
-                            console.log("Found location:", selectedLocation);
                             // Create a new location object with all updated fields
                             const updatedLocation = {
                               ...location,

@@ -40,7 +40,6 @@ export default function History() {
       setPlans(response.data);
       setCurrentPage(1); // Reset to first page when new data is loaded
     } catch (error) {
-      console.log(error);
       toast.error(error.response.data.error.message);
     } finally {
       setIsLoading(false);

@@ -56,8 +56,6 @@ export default function HolidayDetails() {
       toast.success("Holiday approved successfully");
       navigate(-1);
     } catch (error) {
-      console.log(error);
-
       toast.error(
         error.response?.data?.error.message || "Failed to approve holiday"
       );
@@ -74,8 +72,6 @@ export default function HolidayDetails() {
       toast.success("Holiday rejected successfully");
       navigate(-1);
     } catch (error) {
-      console.log(error);
-
       toast.error(
         error.response?.data?.error.message ||
           "Failed to reject holiday request"
