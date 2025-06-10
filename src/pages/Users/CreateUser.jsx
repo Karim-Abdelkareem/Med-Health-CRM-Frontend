@@ -135,6 +135,8 @@ export default function CreateUser() {
       role: formData.role,
     };
 
+    console.log(userData);
+
     // Add role-specific fields
     if (formData.role === "R") {
       userData.LM = formData.LM;

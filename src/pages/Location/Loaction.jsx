@@ -8,7 +8,7 @@ export default function Location() {
   const isSelected = (value) => mode === value;
 
   return (
-    <div className="m-6">
+    <div className="m-2 md:m-6">
       <h1 className="text-3xl font-semibold text-gray-800 mb-6">Locations</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -73,6 +73,9 @@ export default function CreateUser() {
 
   // Governate options
   const governates = [
+    { value: "All", label: "All" },
+    { value: "Faiyum-BaniSewif", label: "Faiyum - Bani Sewif" },
+    { value: "Minya-Aswan", label: "Minya - Aswan" },
     { value: "Faiyum", label: "Faiyum" },
     { value: "BaniSewif", label: "Bani Sewif" },
     { value: "Minya", label: "Minya" },
@@ -180,6 +183,8 @@ export default function CreateUser() {
       password: formData.password,
       role: formData.role,
     };
+
+    console.log(userData);
 
     // Add role-specific fields
     if (formData.role === "R") {

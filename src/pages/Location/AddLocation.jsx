@@ -131,7 +131,7 @@ export default function AddLocation() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto md:px-4 py-8">
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
         <div className="p-6 bg-blue-600 text-white flex items-center">
           <svg
@@ -205,7 +205,7 @@ export default function AddLocation() {
 
                 {city && (
                   <InputField
-                    label="Village"
+                    label="Specialist"
                     value={village}
                     onChange={(e) => setVillage(e.target.value)}
                     placeholder="Enter village name (optional)"
@@ -219,17 +219,22 @@ export default function AddLocation() {
                   Coordinates
                 </h2>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <InputField
                     label="Latitude"
                     type="number"
                     value={position ? position[0] : ""}
-                    onChange={(e) =>
-                      setPosition([
-                        parseFloat(e.target.value),
-                        position ? position[1] : 0,
-                      ])
-                    }
+                    onChange={(e) => {
+                      const latValue = e.target.value;
+                      if (latValue === "" || isNaN(parseFloat(latValue))) {
+                        setPosition(null);
+                      } else {
+                        setPosition([
+                          parseFloat(latValue),
+                          position ? position[1] : 0,
+                        ]);
+                      }
+                    }}
                     placeholder="Latitude"
                     required={true}
                   />
@@ -238,12 +243,18 @@ export default function AddLocation() {
                     label="Longitude"
                     type="number"
                     value={position ? position[1] : ""}
-                    onChange={(e) =>
-                      setPosition([
-                        position ? position[0] : 0,
-                        parseFloat(e.target.value),
-                      ])
-                    }
+                    onChange={(e) => {
+                      const lngValue = e.target.value;
+                      if (lngValue === "" || isNaN(parseFloat(lngValue))) {
+                        // If input is empty or invalid, set position to null
+                        setPosition(null);
+                      } else {
+                        setPosition([
+                          position ? position[0] : 0,
+                          parseFloat(lngValue),
+                        ]);
+                      }
+                    }}
                     placeholder="Longitude"
                     required={true}
                   />

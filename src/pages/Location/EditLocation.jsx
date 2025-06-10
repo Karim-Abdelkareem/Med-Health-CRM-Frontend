@@ -190,7 +190,7 @@ const EditLocation = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="bg-white rounded-xl shadow-md p-6">
         <h1 className="text-2xl font-bold mb-6">Edit Location</h1>
 
@@ -207,84 +207,100 @@ const EditLocation = () => {
         />
 
         {selectedLocation && (
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <InputField
-                label="Location Name"
-                value={locationName}
-                onChange={(e) => setLocationName(e.target.value)}
-                required
-              />
-              <InputField
-                label="Address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                required
-              />
-              <SelectField
-                label="State"
-                value={state}
-                onChange={(e) => setState(e.target.value)}
-                options={states}
-                placeholder="Select state"
-                required
-              />
-              <SelectField
-                label="City"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                options={availableCities}
-                placeholder="Select city"
-                required
-                disabled={availableCities.length === 0}
-              />
-              {city && (
+          <div className="mt-6 grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex-1">
                 <InputField
-                  label="Village"
-                  value={village}
-                  onChange={(e) => setVillage(e.target.value)}
-                  placeholder="Enter village name (optional)"
-                  required={false}
-                />
-              )}
-              <div className="grid grid-cols-2 gap-4">
-                <InputField
-                  label="Latitude"
-                  type="number"
-                  value={position ? position[0] : ""}
-                  onChange={(e) =>
-                    setPosition([
-                      parseFloat(e.target.value),
-                      position ? position[1] : 0,
-                    ])
-                  }
+                  label="Location Name"
+                  value={locationName}
+                  onChange={(e) => setLocationName(e.target.value)}
                   required
                 />
                 <InputField
-                  label="Longitude"
-                  type="number"
-                  value={position ? position[1] : ""}
-                  onChange={(e) =>
-                    setPosition([
-                      position ? position[0] : 0,
-                      parseFloat(e.target.value),
-                    ])
-                  }
+                  label="Address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
                   required
                 />
+                <SelectField
+                  label="State"
+                  value={state}
+                  onChange={(e) => setState(e.target.value)}
+                  options={states}
+                  placeholder="Select state"
+                  required
+                />
+                <SelectField
+                  label="City"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  options={availableCities}
+                  placeholder="Select city"
+                  required
+                  disabled={availableCities.length === 0}
+                />
+                {city && (
+                  <InputField
+                    label="Village"
+                    value={village}
+                    onChange={(e) => setVillage(e.target.value)}
+                    placeholder="Enter village name (optional)"
+                    required={false}
+                  />
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <InputField
+                    label="Latitude"
+                    type="number"
+                    value={position ? position[0] : ""}
+                    onChange={(e) => {
+                      const latValue = e.target.value;
+                      if (latValue === "" || isNaN(parseFloat(latValue))) {
+                        setPosition(null);
+                      } else {
+                        setPosition([
+                          parseFloat(e.target.value),
+                          position ? position[1] : 0,
+                        ]);
+                      }
+                    }}
+                    required
+                  />
+                  <InputField
+                    label="Longitude"
+                    type="number"
+                    value={position ? position[1] : ""}
+                    onChange={(e) => {
+                      const lngValue = e.target.value;
+                      if (lngValue === "" || isNaN(parseFloat(lngValue))) {
+                        // If input is empty or invalid, set position to null
+                        setPosition(null);
+                      } else {
+                        setPosition([
+                          position ? position[0] : 0,
+                          parseFloat(e.target.value),
+                        ]);
+                      }
+                    }}
+                    required
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="h-96 rounded-lg overflow-hidden border border-gray-300">
-              <MapContainer
-                center={position || [30.0444, 31.2357]} // Default to Cairo if no position
-                zoom={position ? 13 : 6}
-                style={{ height: "100%", width: "100%" }}
-              >
-                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                <LocationMarker position={position} setPosition={setPosition} />
-                <MapController position={position} />
-              </MapContainer>
+              <div className="h-96 rounded-lg overflow-hidden border border-gray-300 flex-1">
+                <MapContainer
+                  center={position || [30.0444, 31.2357]} // Default to Cairo if no position
+                  zoom={position ? 13 : 6}
+                  style={{ height: "100%", width: "100%" }}
+                >
+                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                  <LocationMarker
+                    position={position}
+                    setPosition={setPosition}
+                  />
+                  <MapController position={position} />
+                </MapContainer>
+              </div>
             </div>
 
             <div className="col-span-2 gap-2 flex justify-end mt-4">

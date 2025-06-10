@@ -3,6 +3,7 @@ import { IoChevronDown, IoClose } from "react-icons/io5";
 import toast from "react-hot-toast";
 import locationService from "../store/Location/locationService";
 import monthlyService from "../store/Monthly/monthlyService";
+import SelectField from "./SelectField";
 
 export default function PlanModal({
   planOption,
@@ -32,7 +33,6 @@ export default function PlanModal({
     {
       locations: [],
       visitDate: getFirstDayOfMonth(),
-      dropdownOpen: false,
     },
   ]);
   const [notes, setNotes] = useState("");
@@ -48,14 +48,18 @@ export default function PlanModal({
       {
         locations: [],
         visitDate: nextDate.toISOString().split("T")[0],
-        dropdownOpen: false,
       },
     ]);
   };
 
   const updateRegion = (index, key, value) => {
     const updated = [...regions];
-    updated[index][key] = value;
+    if (key === "locations") {
+      // Handle multi-select values
+      updated[index][key] = value.map((option) => option.value);
+    } else {
+      updated[index][key] = value;
+    }
     setRegions(updated);
   };
 
@@ -168,17 +172,21 @@ export default function PlanModal({
             {regions.map((region, index) => (
               <div key={index} className="bg-gray-50 p-4 rounded-lg space-y-3">
                 <div className="flex items-center gap-3">
-                  <div
-                    onClick={() =>
-                      updateRegion(index, "dropdownOpen", !region.dropdownOpen)
-                    }
-                    className="flex-1 p-2 rounded-lg border border-gray-300 flex justify-between items-center cursor-pointer hover:border-blue-500 transition-colors"
-                  >
-                    <span className="text-gray-700">Select Locations</span>
-                    <IoChevronDown
-                      className={`${
-                        region.dropdownOpen ? "rotate-180" : ""
-                      } text-gray-500 transition-transform duration-200`}
+                  <div className="flex-1">
+                    <SelectField
+                      label="Select Locations"
+                      value={region.locations}
+                      onChange={(e) => {
+                        const selectedOptions = e.target.value;
+                        updateRegion(index, "locations", selectedOptions);
+                      }}
+                      options={locationOptions.map((loc) => ({
+                        value: loc._id,
+                        label: loc.locationName,
+                      }))}
+                      placeholder="Choose locations"
+                      required
+                      isMulti={true}
                     />
                   </div>
 
@@ -201,43 +209,6 @@ export default function PlanModal({
                     </button>
                   )}
                 </div>
-
-                {region.dropdownOpen && (
-                  <div className="bg-white border border-gray-200 rounded-lg mt-2 shadow-sm p-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                      {locationOptions.map((option) => (
-                        <label
-                          key={option._id}
-                          className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                        >
-                          <input
-                            type="checkbox"
-                            value={option._id}
-                            checked={region.locations?.includes(option._id)}
-                            onChange={(e) => {
-                              const selected = region.locations || [];
-                              let updated;
-
-                              if (e.target.checked) {
-                                updated = [...selected, option._id];
-                              } else {
-                                updated = selected.filter(
-                                  (loc) => loc !== option._id
-                                );
-                              }
-
-                              updateRegion(index, "locations", updated);
-                            }}
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                          />
-                          <span className="text-sm text-gray-700">
-                            {option.locationName}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 {region.locations?.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-3">

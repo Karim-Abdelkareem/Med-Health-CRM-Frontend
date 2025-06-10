@@ -1,3 +1,6 @@
+import React from "react";
+import Select from "react-select";
+
 // Reusable Select Component
 export default function SelectField({
   label,
@@ -6,7 +9,23 @@ export default function SelectField({
   options,
   placeholder,
   required = false,
+  disabled = false,
+  isMulti = false,
 }) {
+  // Convert the value to the format expected by react-select
+  const selectedValue = isMulti
+    ? options?.filter((option) => value?.includes(option.value)) || []
+    : options?.find((option) => option.value === value) || null;
+
+  // Handle change event
+  const handleChange = (selectedOption) => {
+    onChange({
+      target: {
+        value: isMulti ? selectedOption || [] : selectedOption?.value || "",
+      },
+    });
+  };
+
   return (
     <div className="mb-4">
       <label
@@ -15,31 +34,58 @@ export default function SelectField({
       >
         {label} {required && <span className="text-red-500">*</span>}
       </label>
-      <div className="relative">
-        <select
-          id={label.toLowerCase().replace(/\s/g, "-")}
-          value={value}
-          onChange={onChange}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none transition-colors"
-          required={required}
-        >
-          <option value="">{placeholder}</option>
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-          <svg
-            className="fill-current h-4 w-4"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-          >
-            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-          </svg>
-        </div>
-      </div>
+      <Select
+        id={label.toLowerCase().replace(/\s/g, "-")}
+        value={selectedValue}
+        onChange={handleChange}
+        options={options}
+        placeholder={placeholder}
+        isDisabled={disabled}
+        isSearchable={true}
+        isMulti={isMulti}
+        className="react-select-container"
+        classNamePrefix="react-select"
+        styles={{
+          control: (base) => ({
+            ...base,
+            minHeight: "42px",
+            borderColor: "#D1D5DB",
+            "&:hover": {
+              borderColor: "#2563EB",
+            },
+          }),
+          option: (base, state) => ({
+            ...base,
+            backgroundColor: state.isSelected
+              ? "#2563EB"
+              : state.isFocused
+              ? "#EFF6FF"
+              : "white",
+            color: state.isSelected ? "white" : "#374151",
+            "&:hover": {
+              backgroundColor: state.isSelected ? "#2563EB" : "#EFF6FF",
+            },
+          }),
+          multiValue: (base) => ({
+            ...base,
+            backgroundColor: "#EFF6FF",
+            borderRadius: "9999px",
+          }),
+          multiValueLabel: (base) => ({
+            ...base,
+            color: "#2563EB",
+            padding: "2px 8px",
+          }),
+          multiValueRemove: (base) => ({
+            ...base,
+            color: "#2563EB",
+            ":hover": {
+              backgroundColor: "#DBEAFE",
+              color: "#1D4ED8",
+            },
+          }),
+        }}
+      />
     </div>
   );
 }
