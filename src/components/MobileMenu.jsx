@@ -100,7 +100,7 @@ export default function MobileMenu({
             <Link
               className="flex items-center text-red-500 hover:text-red-700 transition-colors"
               onClick={() => {
-                logout;
+                logout();
                 setIsMobileMenuOpen(false);
               }}
             >
