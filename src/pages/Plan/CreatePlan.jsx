@@ -147,16 +147,14 @@ export default function CreatePlan() {
             key={plan.value}
             plan={plan}
             disabled={
-              !canCreateOrEditPlan() ||
-              (plan.value !== "monthly" &&
-                (!planData.plans || planData.plans.length === 0))
+              plan.value !== "monthly" &&
+              (!planData.plans || planData.plans.length === 0)
             }
             isSelected={selectedPlan === plan.value}
             onClick={() => {
               if (
-                canCreateOrEditPlan() &&
-                (plan.value === "monthly" ||
-                  (planData.plans && planData.plans.length > 0))
+                plan.value === "monthly" ||
+                (planData.plans && planData.plans.length > 0)
               ) {
                 setSelectedPlan(plan.value);
               }
