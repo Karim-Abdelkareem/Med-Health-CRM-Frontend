@@ -14,6 +14,7 @@ import locationService from "../../store/Location/locationService";
 import toast from "react-hot-toast";
 import governates from "../../data/governates.json";
 import cities from "../../data/cities.json";
+import DeleteModal from "../../components/DeleteModal";
 
 // Leaflet icon fix
 delete L.Icon.Default.prototype._getIconUrl;
@@ -60,6 +61,7 @@ const EditLocation = () => {
   const [position, setPosition] = useState(null);
   const [availableCities, setAvailableCities] = useState([]);
   const [locations, setLocations] = useState([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // fetch locations
   const fetchLocations = async () => {
@@ -187,6 +189,7 @@ const EditLocation = () => {
       toast.error("Failed to delete location");
       console.error("Error deleting location:", err);
     }
+    setShowDeleteModal(false);
   };
 
   return (
@@ -200,10 +203,11 @@ const EditLocation = () => {
           onChange={(e) => setSelectedId(e.target.value)}
           options={locations?.map((loc) => ({
             value: loc._id,
-            label: loc.locationName,
+            label: `${loc.locationName} - ${loc.state}  - ${loc.city}`,
           }))}
           placeholder="Choose a location"
           required
+          dropdownClassName="z-50"
         />
 
         {selectedLocation && (
@@ -287,7 +291,7 @@ const EditLocation = () => {
                 </div>
               </div>
 
-              <div className="h-96 rounded-lg overflow-hidden border border-gray-300 flex-1">
+              <div className="h-96 rounded-lg overflow-hidden border border-gray-300 flex-1 relative z-0">
                 <MapContainer
                   center={position || [30.0444, 31.2357]} // Default to Cairo if no position
                   zoom={position ? 13 : 6}
@@ -305,7 +309,7 @@ const EditLocation = () => {
 
             <div className="col-span-2 gap-2 flex justify-end mt-4">
               <button
-                onClick={onDelete}
+                onClick={() => setShowDeleteModal(true)}
                 className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
               >
                 Delete Location
@@ -317,6 +321,14 @@ const EditLocation = () => {
                 Update Location
               </button>
             </div>
+            <DeleteModal
+              isOpen={showDeleteModal}
+              onClose={() => setShowDeleteModal(false)}
+              onConfirm={onDelete}
+              itemName={selectedLocation?.locationName || "this location"}
+              title="Delete Location"
+              message="Are you sure you want to delete this location? This action cannot be undone."
+            />
           </div>
         )}
       </div>

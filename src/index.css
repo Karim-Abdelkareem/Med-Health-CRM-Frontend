@@ -1,1 +1,5 @@
 @import "tailwindcss";
+
+.react-select__menu {
+  z-index: 999 !important;
+}

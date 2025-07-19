@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import locationService from "../store/Location/locationService";
 import monthlyService from "../store/Monthly/monthlyService";
 import SelectField from "./SelectField";
+import { useAuth } from "../context/AuthContext";
 
 export default function PlanModal({
   planOption,
@@ -104,6 +105,12 @@ export default function PlanModal({
     fetchPlanData();
   };
 
+  const { user } = useAuth();
+  // Filter location options by user governate
+  const filteredLocationOptions = locationOptions.filter(
+    (loc) => loc.state === user?.governate
+  );
+
   return (
     <div
       className={`${
@@ -177,12 +184,11 @@ export default function PlanModal({
                       label="Select Locations"
                       value={region.locations}
                       onChange={(e) => {
-                        const selectedOptions = e.target.value;
-                        updateRegion(index, "locations", selectedOptions);
+                        updateRegion(index, "locations", e.target.value);
                       }}
-                      options={locationOptions.map((loc) => ({
+                      options={filteredLocationOptions.map((loc) => ({
                         value: loc._id,
-                        label: loc.locationName,
+                        label: `${loc.locationName} - ${loc.state} - ${loc.city}`,
                       }))}
                       placeholder="Choose locations"
                       required
@@ -219,7 +225,9 @@ export default function PlanModal({
                           key={locId}
                           className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm border border-blue-200"
                         >
-                          {loc?.locationName || "Unknown"}
+                          {loc
+                            ? `${loc.locationName} - ${loc.state} - ${loc.city}`
+                            : "Unknown"}
                         </div>
                       );
                     })}

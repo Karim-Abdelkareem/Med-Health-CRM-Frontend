@@ -35,7 +35,6 @@ const planService = {
         Authorization: `Bearer ${token}`,
       },
     });
-
     return id;
   },
 
@@ -203,6 +202,8 @@ const planService = {
   },
 
   markVisitIncomplete: async (planId, locationId, note) => {
+    console.log(note);
+
     const token = getAuthToken();
     const response = await axios.put(
       `${API_URL}/incomplete/${planId}/${locationId}`,
@@ -218,6 +219,25 @@ const planService = {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
+  },
+  getUserCurrentMonth: async (userId) => {
+    const token = getAuthToken();
+    const response = await axios.get(
+      `${base_url}/api/monthly-plans/current-plan/${userId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    return response.data;
+  },
+  deleteMonthPlan: async (id) => {
+    const token = getAuthToken();
+    await axios.delete(`${base_url}/api/monthly-plans/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return id;
   },
 };
 

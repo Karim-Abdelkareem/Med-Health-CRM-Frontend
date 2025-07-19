@@ -60,6 +60,7 @@ const userService = {
 
   deleteUser: async (id) => {
     const token = getAuthToken();
+
     await axios.delete(`${API_URL}/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,

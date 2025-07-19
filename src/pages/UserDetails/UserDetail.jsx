@@ -28,11 +28,12 @@ import {
   BarElement,
 } from "chart.js";
 import { Doughnut, Line, Bar } from "react-chartjs-2";
-import userService from "../../store/User/UserService";
+// import userService from "../../store/User/UserService";
 import holidayService from "../../store/Holidays/HolidaysService";
 import planService from "../../store/Plan/planyService";
 import axios from "axios";
 import { base_url } from "../../constants/axiosConfig";
+import { useUser } from "../../hooks/useUsers";
 
 // Register ChartJS components
 ChartJS.register(
@@ -51,7 +52,7 @@ export default function UserDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [user, setUser] = useState(null);
+  // const [user, setUser] = useState(null);
   const [holidays, setHolidays] = useState([]);
   const [plans, setPlans] = useState([]);
   const [kpis, setKpis] = useState([]);
@@ -60,6 +61,10 @@ export default function UserDetail() {
   const [currentNotesPage, setCurrentNotesPage] = useState(1);
   const [currentPlansPage, setCurrentPlansPage] = useState(1);
   const itemsPerPage = 12;
+
+  // React Query hook for user
+  const { data: user, isLoading: userLoading } = useUser(id);
+  console.log(user);
 
   // Pagination helpers
   const paginate = (items, currentPage) => {
@@ -75,17 +80,12 @@ export default function UserDetail() {
     const fetchUserData = async () => {
       try {
         setIsLoading(true);
-        // Fetch user details
-        const userResponse = await userService.getUserById(id);
-        setUser(userResponse.data);
-
         // Fetch user holidays
         const holidaysResponse = await holidayService.getUserHolidays(id);
         setHolidays(holidaysResponse.data.data || []);
 
         // Fetch user plans
         const plansResponse = await planService.getUserPlans(id);
-
         setPlans(plansResponse.data || []);
 
         // Fetch user KPIs
@@ -224,7 +224,7 @@ export default function UserDetail() {
     ],
   };
 
-  if (isLoading) {
+  if (isLoading || userLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <LoadingSpinner />
@@ -289,22 +289,22 @@ export default function UserDetail() {
               </div>
               <div className="flex-1">
                 <h2 className="text-2xl font-bold text-gray-900">
-                  {user.name}
+                  {user.data.name}
                 </h2>
-                <p className="text-gray-600">{formatRole(user.role)}</p>
+                <p className="text-gray-600">{formatRole(user.data.role)}</p>
                 <div className="mt-2 flex flex-wrap gap-4">
                   <div className="flex items-center text-gray-600">
                     <FiMail className="mr-2" />
-                    {user.email}
+                    {user.data.email}
                   </div>
                   <div className="flex items-center text-gray-600">
                     <FiMapPin className="mr-2" />
-                    {user.governate || "Location not specified"}
+                    {user.data.governate || "Location not specified"}
                   </div>
-                  {user.phone && (
+                  {user.data.phone && (
                     <div className="flex items-center text-gray-600">
                       <FiPhone className="mr-2" />
-                      {user.phone}
+                      {user.data.phone}
                     </div>
                   )}
                 </div>

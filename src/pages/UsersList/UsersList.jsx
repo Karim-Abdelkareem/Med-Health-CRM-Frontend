@@ -1,59 +1,40 @@
-import React, { useEffect, useState } from "react";
-import userService from "../../store/User/UserService";
-import { FiEdit, FiUserX, FiUserCheck, FiEye } from "react-icons/fi";
+import React, { useState } from "react";
+import { FiEdit, FiUserX, FiUserCheck, FiEye, FiTrash } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import {
+  useEmployees,
+  useDeactivateUser,
+  useDeleteUser,
+} from "../../hooks/useUsers";
 
 export default function UsersList() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all"); // "all", "active", "inactive"
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Define role hierarchy (higher index = higher permission)
-  const roleHierarchy = ["R", "DM", "Area", "LM", "HR", "GM"];
+  // React Query hooks
+  const { data: employees, isLoading: loading, refetch } = useEmployees();
+  const deactivateUserMutation = useDeactivateUser();
+  const deleteUserMutation = useDeleteUser();
 
-  // Add a function to filter users based on role hierarchy
+  // Update filterUsersByRole so HR can see all users except themselves (including GM), and GM can see all users except themselves
   const filterUsersByRole = (users) => {
     if (!user) return [];
-
-    const userRoleIndex = roleHierarchy.indexOf(user.role);
-
-    // If user is GM or HR, show all users
     if (user.role === "GM" || user.role === "HR") {
-      return users;
+      return users.filter((u) => u._id !== user._id);
     }
-
-    // Otherwise, filter users based on hierarchy
-    return users.filter((u) => {
-      const roleIndex = roleHierarchy.indexOf(u.role);
-      return roleIndex < userRoleIndex; // Only show users with lower permission level
-    });
+    return [];
   };
 
-  const fetchUsers = async () => {
-    setLoading(true);
-    try {
-      const response = await userService.getAllEmployee();
-      // Filter users based on role hierarchy
-      const filteredUsers = filterUsersByRole(response.data);
-      setUsers(filteredUsers);
-    } catch (error) {
-      toast.error("Failed to fetch users");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  // Filter employees by role
+  const users = employees ? filterUsersByRole(employees.data) : [];
 
   const handleEdit = (userId) => {
     navigate(`/edit-user/${userId}`);
@@ -65,14 +46,27 @@ export default function UsersList() {
   };
 
   const handleDeactivate = async (userId) => {
-    try {
-      await userService.deactivateUser(userId);
-      toast.success("User status updated successfully");
-      fetchUsers(); // Refresh the list
-    } catch (error) {
-      toast.error("Failed to update user status");
-      console.error(error);
-    }
+    deactivateUserMutation.mutate(userId, {
+      onSuccess: () => {
+        toast.success("User status updated successfully");
+        refetch();
+      },
+      onError: () => {
+        toast.error("Failed to update user status");
+      },
+    });
+  };
+
+  const handleDeleteUser = async (userId) => {
+    deleteUserMutation.mutate(userId, {
+      onSuccess: () => {
+        toast.success("User deleted successfully");
+        refetch();
+      },
+      onError: () => {
+        toast.error("Failed to delete user");
+      },
+    });
   };
 
   // Apply both search and status filters
@@ -82,13 +76,11 @@ export default function UsersList() {
       user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.role?.toLowerCase().includes(searchTerm.toLowerCase());
-
     // Apply status filter
     const matchesStatus =
       statusFilter === "all" ||
       (statusFilter === "active" && user.active) ||
       (statusFilter === "inactive" && !user.active);
-
     return matchesSearch && matchesStatus;
   });
 
@@ -246,6 +238,16 @@ export default function UsersList() {
                             <FiUserCheck size={18} />
                           )}
                         </button>
+                        <button
+                          onClick={() => {
+                            setUserToDelete(user);
+                            setShowDeleteUserModal(true);
+                          }}
+                          className="text-red-600 hover:text-red-900"
+                          title="Delete User"
+                        >
+                          <FiTrash size={18} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -315,6 +317,38 @@ export default function UsersList() {
                 } text-white rounded-md`}
               >
                 {selectedUser.active ? "Deactivate" : "Activate"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Delete Confirmation Modal */}
+      {showDeleteUserModal && userToDelete && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Confirm Delete
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Are you sure you want to{" "}
+              <span className="font-bold text-red-600">delete</span>{" "}
+              {userToDelete.name}? This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowDeleteUserModal(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  handleDeleteUser(userToDelete._id);
+                  setShowDeleteUserModal(false);
+                }}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md"
+              >
+                Delete
               </button>
             </div>
           </div>

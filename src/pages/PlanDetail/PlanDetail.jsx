@@ -5,13 +5,14 @@ import { enUS } from "date-fns/locale";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { FiArrowLeft, FiEdit } from "react-icons/fi";
+import { FiArrowLeft, FiEdit, FiTrash } from "react-icons/fi";
 import { CgNotes } from "react-icons/cg";
 import toast from "react-hot-toast";
 import LocationNoteForm from "../../components/LocationNoteForm";
 import planService from "../../store/Plan/planyService";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { useAuth } from "../../context/AuthContext";
+import DeleteModal from "../../components/DeleteModal";
 
 // PlanRegionCard component from UsersPlan.jsx
 const PlanRegionCard = ({ region, planId, onDataRefresh }) => {
@@ -23,8 +24,10 @@ const PlanRegionCard = ({ region, planId, onDataRefresh }) => {
   const locationId = region._id || region.location?._id;
 
   // Handle both old and new data structures
-  const locationName =
-    region.location?.locationName || region.location || "Unknown Location";
+
+  const locationName = region.location?.locationName
+    ? `${region.location?.locationName} - ${region.location?.state} - ${region.location?.city}`
+    : region.location || "Unknown Location";
   const latitude = parseFloat(
     region.location?.latitude || region.latitude || 0
   );
@@ -388,6 +391,8 @@ const PlanDetail = () => {
   const [plan, setPlan] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchPlanDetails();
@@ -410,6 +415,9 @@ const PlanDetail = () => {
   const handleEditPlan = () => {
     navigate(`/plan/edit/${id}`);
   };
+
+  // Handler for delete button
+  const handleDeletePlan = () => setShowDeleteModal(true);
 
   if (isLoading) {
     return (
@@ -474,6 +482,16 @@ const PlanDetail = () => {
                   className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
                 >
                   <FiEdit /> Edit Plan
+                </button>
+              )}
+              {/* Delete Button */}
+              {(user.role === "GM" || user.role === "HR") && (
+                <button
+                  onClick={handleDeletePlan}
+                  className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
+                  disabled={isDeleting}
+                >
+                  <FiTrash /> Delete Plan
                 </button>
               )}
               <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200">
@@ -555,6 +573,24 @@ const PlanDetail = () => {
           </div>
         )}
       </div>
+      {/* Delete Modal */}
+      <DeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={async () => {
+          setIsDeleting(true);
+          try {
+            await planService.deletePlan(plan._id);
+            toast.success("Plan deleted successfully");
+            navigate(-1);
+          } catch {
+            toast.error("Failed to delete plan");
+          }
+          setIsDeleting(false);
+          setShowDeleteModal(false);
+        }}
+        itemName="This Plan"
+      />
     </div>
   );
 };

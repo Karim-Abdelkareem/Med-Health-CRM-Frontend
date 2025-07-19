@@ -4,7 +4,7 @@ export default function DeleteModal({ isOpen, onClose, onConfirm, itemName }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/40">
       <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-md">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">
           Confirm Deletion

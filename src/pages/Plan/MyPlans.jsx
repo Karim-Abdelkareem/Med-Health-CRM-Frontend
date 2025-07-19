@@ -405,23 +405,38 @@ export default function MyPlans() {
                           .slice()
                           .sort((a, b) => {
                             // First sort by status: incomplete first, then completed
-                            const statusA = a.status?.toLowerCase().trim() || "";
-                            const statusB = b.status?.toLowerCase().trim() || "";
-                            
-                            if (statusA === "incomplete" && statusB === "completed") return -1;
-                            if (statusA === "completed" && statusB === "incomplete") return 1;
-                            
+                            const statusA =
+                              a.status?.toLowerCase().trim() || "";
+                            const statusB =
+                              b.status?.toLowerCase().trim() || "";
+
+                            if (
+                              statusA === "incomplete" &&
+                              statusB === "completed"
+                            )
+                              return -1;
+                            if (
+                              statusA === "completed" &&
+                              statusB === "incomplete"
+                            )
+                              return 1;
+
                             // If both are completed, sort by endDate (most recent first)
-                            if (statusA === "completed" && statusB === "completed") {
+                            if (
+                              statusA === "completed" &&
+                              statusB === "completed"
+                            ) {
                               // If endDate exists for both, compare them
                               if (a.endDate && b.endDate) {
-                                return new Date(b.endDate) - new Date(a.endDate);
+                                return (
+                                  new Date(b.endDate) - new Date(a.endDate)
+                                );
                               }
                               // If only one has endDate, prioritize the one with endDate
                               if (a.endDate) return -1;
                               if (b.endDate) return 1;
                             }
-                            
+
                             return 0;
                           })
                           .map((region, index) => (
@@ -462,8 +477,9 @@ export default function MyPlans() {
                                           completed:
                                             "bg-green-100 text-green-800",
                                           incomplete: "bg-red-100 text-red-800",
-                                        }[region.status?.toLowerCase().trim()] ||
-                                        "bg-gray-100"
+                                        }[
+                                          region.status?.toLowerCase().trim()
+                                        ] || "bg-gray-100"
                                       }`}
                                     >
                                       {region.status}
@@ -494,7 +510,8 @@ export default function MyPlans() {
                                     )}
                                   {region.status?.toLowerCase().trim() ===
                                     "incomplete" &&
-                                    region.startDate && (
+                                    region.startDate &&
+                                    !region.endDate && (
                                       <button
                                         className="bg-red-100 text-red-700 text-sm px-3 py-1 rounded hover:bg-red-200 transition"
                                         onClick={() => {

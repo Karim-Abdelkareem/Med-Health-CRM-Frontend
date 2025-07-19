@@ -3,6 +3,8 @@ import React, { useEffect, useState } from "react";
 import userService from "../../store/User/UserService";
 import planService from "../../store/Plan/planyService";
 import { useAuth } from "../../context/AuthContext";
+import { FaTrash } from "react-icons/fa";
+import DeleteModal from "../../components/DeleteModal";
 
 // Reusable Select Input Component
 const SelectInput = ({ id, label, value, onChange, options, placeholder }) => {
@@ -63,7 +65,7 @@ const DateInput = ({ label, value, onChange }) => {
 };
 
 // Plan Card Component
-const PlanCard = ({ plan }) => {
+const PlanCard = ({ plan, onDeleteClick }) => {
   const navigate = useNavigate();
   // Handle both old and new data structures
   const visitDate =
@@ -131,29 +133,40 @@ const PlanCard = ({ plan }) => {
         <div className="text-sm text-gray-500">
           {completedRegions} of {totalRegions} completed
         </div>
-        <button
-          onClick={(e) => {
-            e.stopPropagation(); // Prevent triggering the parent onClick
-            navigate(`/plan-detail/${plan._id}`);
-          }}
-          className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
-        >
-          View Details
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4 ml-1"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+        <div className="flex space-x-4">
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent triggering the parent onClick
+              navigate(`/plan-detail/${plan._id}`);
+            }}
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </button>
+            View Details
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4 ml-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
+          <button
+            className="relative z-20"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onDeleteClick) onDeleteClick(plan);
+            }}
+          >
+            <FaTrash className="text-red-400 hover:text-red-700 hover:cursor-pointer" />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -181,6 +194,10 @@ export default function UsersPlan() {
   const [endDate, setEndDate] = useState(currentDate);
   const [plansData, setPlansData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [planToDelete, setPlanToDelete] = useState(null);
+  const [planCurrentMonth, setPlanCurrentMonth] = useState(null);
+  const [deletionType, setDeletionType] = useState(null); // 'individual' or 'monthly'
 
   const { user } = useAuth();
 
@@ -253,9 +270,23 @@ export default function UsersPlan() {
     }
   };
 
+  // Fetch current monthly plan
+  const fetchCurrentMonthPlan = async () => {
+    if (!selectedUser) return;
+
+    try {
+      const res = await planService.getUserCurrentMonth(selectedUser);
+      setPlanCurrentMonth(res);
+    } catch (err) {
+      console.error("Error fetching current monthly plan:", err);
+      setPlanCurrentMonth(null);
+    }
+  };
+
   useEffect(() => {
     if (selectedUser) {
       getMonthlyPlans();
+      fetchCurrentMonthPlan();
     }
   }, [selectedUser, startDate, endDate]);
 
@@ -264,6 +295,7 @@ export default function UsersPlan() {
     setSelectedRole(e.target.value);
     setSelectedUser("");
     setPlansData([]);
+    setPlanCurrentMonth(null);
   };
 
   // Handle user change
@@ -271,6 +303,106 @@ export default function UsersPlan() {
     setSelectedUser(e.target.value);
   };
 
+  // Handler for individual plan deletion (from card)
+  const handleDeleteClick = (plan) => {
+    setPlanToDelete(plan);
+    setDeletionType("individual");
+    setShowDeleteModal(true);
+  };
+
+  // Handler for monthly plan deletion
+  const handleDeleteMonthlyPlan = () => {
+    setPlanToDelete(planCurrentMonth);
+    setDeletionType("monthly");
+    setShowDeleteModal(true);
+  };
+
+  // Handler for closing modal
+  const handleCloseDeleteModal = () => {
+    setShowDeleteModal(false);
+    setPlanToDelete(null);
+    setDeletionType(null);
+  };
+
+  // Handler for confirming deletion
+  const handleConfirmDeletion = async () => {
+    if (!planToDelete) return;
+
+    setIsLoading(true);
+    try {
+      // Get the plan ID based on the structure
+      const planId = planToDelete.data?._id || planToDelete._id;
+
+      if (deletionType === "individual") {
+        // Use deletePlan for individual plan deletion
+        await planService.deletePlan(planId);
+
+        // Remove it from the plansData array immediately
+        setPlansData((prevPlans) =>
+          prevPlans.filter((plan) => plan._id !== planId)
+        );
+
+        // If the deleted plan was the current month plan, clear it
+        if (
+          planCurrentMonth &&
+          (planCurrentMonth.data?._id === planId ||
+            planCurrentMonth._id === planId)
+        ) {
+          setPlanCurrentMonth(null);
+        }
+
+        // Refresh data after a short delay to ensure backend consistency
+        setTimeout(async () => {
+          try {
+            const [plansResponse] = await Promise.all([
+              planService.getMonthlyPlans(startDate, endDate, selectedUser),
+              fetchCurrentMonthPlan(),
+            ]);
+
+            setPlansData(plansResponse.data || []);
+          } catch (error) {
+            console.error(
+              "Error refreshing data after individual plan deletion:",
+              error
+            );
+            // Keep the filtered data if refresh fails
+          }
+        }, 1000);
+      } else if (deletionType === "monthly") {
+        // Use deleteMonthPlan for monthly plan deletion
+        await planService.deleteMonthPlan(planId);
+
+        // Clear current month plan and all plans data immediately
+        setPlanCurrentMonth(null);
+        setPlansData([]);
+
+        // Show a brief loading state and then refresh data
+        setTimeout(async () => {
+          try {
+            // Refresh both plans and current month plan
+            const [plansResponse] = await Promise.all([
+              planService.getMonthlyPlans(startDate, endDate, selectedUser),
+              fetchCurrentMonthPlan(),
+            ]);
+
+            setPlansData(plansResponse.data || []);
+          } catch (error) {
+            console.error(
+              "Error refreshing data after monthly plan deletion:",
+              error
+            );
+            setPlansData([]);
+          }
+        }, 1500);
+      }
+    } catch (err) {
+      console.error("Failed to delete plan", err);
+      // You might want to show an error message to the user here
+    } finally {
+      setIsLoading(false);
+      handleCloseDeleteModal();
+    }
+  };
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-3xl font-bold text-gray-800 mb-8">User Plans</h1>
@@ -307,26 +439,53 @@ export default function UsersPlan() {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-gray-800">User Plans</h2>
           {selectedUser && (
-            <button
-              onClick={getMonthlyPlans}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-300 flex items-center"
-            >
-              <svg
-                className="w-5 h-5 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
+            <div className="flex gap-2">
+              <button
+                onClick={getMonthlyPlans}
+                disabled={isLoading}
+                className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white px-4 py-2 rounded-lg transition duration-300 flex items-center"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                ></path>
-              </svg>
-              Refresh
-            </button>
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  ></path>
+                </svg>
+                Refresh
+              </button>
+              {/* Delete Current Monthly Plan Button */}
+              {planCurrentMonth && planCurrentMonth.data?._id && (
+                <button
+                  className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white px-4 py-2 rounded-lg transition duration-300 flex items-center"
+                  onClick={handleDeleteMonthlyPlan}
+                  disabled={isLoading}
+                >
+                  <svg
+                    className="w-5 h-5 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                  Delete Current Monthly Plan
+                </button>
+              )}
+            </div>
           )}
         </div>
 
@@ -353,7 +512,11 @@ export default function UsersPlan() {
               ) : plansData.length > 0 ? (
                 <div>
                   {plansData.map((plan) => (
-                    <PlanCard key={plan._id} plan={plan} />
+                    <PlanCard
+                      key={plan._id}
+                      plan={plan}
+                      onDeleteClick={handleDeleteClick}
+                    />
                   ))}
                 </div>
               ) : (
@@ -403,6 +566,21 @@ export default function UsersPlan() {
           )}
         </div>
       </div>
+
+      {/* Delete Modal */}
+      <DeleteModal
+        isOpen={showDeleteModal}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDeletion}
+        title="Delete Plan"
+        message={`Are you sure you want to delete this ${
+          deletionType === "monthly" ? "monthly" : ""
+        } plan${
+          planToDelete
+            ? ` (${planToDelete.data?._id || planToDelete._id || ""})`
+            : ""
+        }?`}
+      />
     </div>
   );
 }
