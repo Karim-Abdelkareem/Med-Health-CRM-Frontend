@@ -4,12 +4,13 @@ import { useAuth } from "../../context/AuthContext";
 import toast from "react-hot-toast";
 
 export default function Login() {
-  const { login, errors, loading } = useAuth();
+  const { login, errors, loading, clearErrors } = useAuth(); // Add clearErrors if available
   const {
     register,
     handleSubmit,
     formState: { errors: formErrors },
     setError,
+    clearErrors: clearFormErrors,
   } = useForm();
 
   // عرض رسائل الخطأ من الخادم
@@ -29,9 +30,18 @@ export default function Login() {
 
   const onSubmit = async (data) => {
     try {
+      // Clear previous form errors
+      clearFormErrors();
+
+      // Clear previous auth errors if clearErrors function exists
+      if (clearErrors) {
+        clearErrors();
+      }
+
       await login(data);
     } catch (error) {
-      // سيتم معالجة الأخطاء في useEffect
+      // Error handling is done in useEffect
+      console.log("Login failed:", error);
     }
   };
 

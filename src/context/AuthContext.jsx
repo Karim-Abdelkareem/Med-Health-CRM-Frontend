@@ -58,7 +58,7 @@ const AuthProvider = ({ children }) => {
       try {
         const user = jwtDecode(token);
         dispatch({ type: "LOGIN", payload: user });
-      } catch (err) {
+      } catch {
         localStorage.removeItem("token");
       }
     } else {
@@ -82,6 +82,7 @@ const AuthProvider = ({ children }) => {
       localStorage.setItem("token", access_token);
       const user = jwtDecode(access_token);
       dispatch({ type: "LOGIN", payload: user });
+      setErrors(null); // Clear errors on successful login
       navigate("/");
     } catch (error) {
       setErrors(error.response?.data?.error.message || "Login failed");
@@ -110,6 +111,9 @@ const AuthProvider = ({ children }) => {
     dispatch({ type: "UPDATE_USER", payload: userData });
   };
 
+  // Add a function to clear errors manually
+  const clearErrors = () => setErrors(null);
+
   return (
     <AuthContext.Provider
       value={{
@@ -121,6 +125,7 @@ const AuthProvider = ({ children }) => {
         updateUser,
         errors,
         loading,
+        clearErrors, // Provide clearErrors in context
       }}
     >
       {children}

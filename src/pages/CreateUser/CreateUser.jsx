@@ -74,8 +74,11 @@ export default function CreateUser() {
   // Governate options
   const governates = [
     { value: "All", label: "All" },
-    { value: "Faiyum-BaniSewif", label: "Faiyum - Bani Sewif" },
-    { value: "Minya-Aswan", label: "Minya - Aswan" },
+    {
+      value: "Faiyum-BaniSewif-Minya-Assuit",
+      label: "Faiyum - Bani Sewif - Minya - Assuit",
+    },
+    { value: "Sohag-Qena-Luxor-Aswan", label: "Sohag - Qena - Luxor - Aswan" },
     { value: "Faiyum", label: "Faiyum" },
     { value: "BaniSewif", label: "Bani Sewif" },
     { value: "Minya", label: "Minya" },

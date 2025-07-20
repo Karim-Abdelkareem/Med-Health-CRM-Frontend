@@ -64,7 +64,6 @@ export default function UserDetail() {
 
   // React Query hook for user
   const { data: user, isLoading: userLoading } = useUser(id);
-  console.log(user);
 
   // Pagination helpers
   const paginate = (items, currentPage) => {

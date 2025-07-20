@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import userService from "../../store/User/UserService";
@@ -15,13 +15,81 @@ import {
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { useAuth } from "../../context/AuthContext";
 
-export default function UserEdit() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const { user } = useAuth();
+// --- Constants ---
+const GOVERNATES = [
+  { value: "All", label: "All" },
+  {
+    value: "Faiyum-BaniSewif-Minya-Assuit",
+    label: "Faiyum - Bani Sewif - Minya - Assuit",
+  },
+  { value: "Sohag-Qena-Luxor-Aswan", label: "Sohag - Qena - Luxor - Aswan" },
+  { value: "Faiyum", label: "Faiyum" },
+  { value: "BaniSewif", label: "Bani Sewif" },
+  { value: "Minya", label: "Minya" },
+  { value: "Asyut", label: "Asyut" },
+  { value: "Sohag", label: "Sohag" },
+  { value: "Qena", label: "Qena" },
+  { value: "Luxor", label: "Luxor" },
+  { value: "Aswan", label: "Aswan" },
+];
 
-  // Form state
-  const [formData, setFormData] = useState({
+const ROLE_HIERARCHY = ["R", "DM", "Area", "LM", "HR", "GM"];
+const ALL_ROLE_OPTIONS = [
+  { value: "R", label: "Representative" },
+  { value: "DM", label: "District Manager" },
+  { value: "Area", label: "Area Sales Manager" },
+  { value: "LM", label: "Line Manager" },
+  { value: "HR", label: "HR" },
+  { value: "GM", label: "General Manager" },
+];
+
+// --- Utility Components ---
+function InputField({ label, icon: Icon, ...props }) {
+  return (
+    <div>
+      <label className="flex items-center text-gray-700 font-medium mb-2">
+        {Icon && <Icon className="mr-2" />} {label}
+        {props.required && <span className="text-red-500 ml-1">*</span>}
+      </label>
+      <input
+        {...props}
+        className="w-full px-4 py-3 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none transition-colors bg-gray-50"
+      />
+    </div>
+  );
+}
+
+function SelectField({ label, icon: Icon, options, ...props }) {
+  return (
+    <div>
+      <label className="flex items-center text-gray-700 font-medium mb-2">
+        {Icon && <Icon className="mr-2" />} {label}
+        {props.required && <span className="text-red-500 ml-1">*</span>}
+      </label>
+      <select
+        {...props}
+        className="w-full px-4 py-3 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none transition-colors bg-gray-50 appearance-none"
+      >
+        <option value="">Select {label.toLowerCase()}</option>
+        {options.map((option) => (
+          <option
+            key={option.value || option._id}
+            value={option.value || option._id}
+          >
+            {option.label || option.name}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+// --- Custom Hooks ---
+/**
+ * Custom hook for user edit logic (fetch, update, validation)
+ */
+function useUserEditLogic(id, user) {
+  const [formData, setFormData] = React.useState({
     name: "",
     email: "",
     role: "",
@@ -30,83 +98,19 @@ export default function UserEdit() {
     DM: "",
     Area: "",
   });
+  const [lineManagers, setLineManagers] = React.useState([]);
+  const [districtManagers, setDistrictManagers] = React.useState([]);
+  const [areaManagers, setAreaManagers] = React.useState([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [isFormValid, setIsFormValid] = React.useState(false);
 
-  // Password form state
-  const [passwordData, setPasswordData] = useState({
-    password: "",
-    confirmPassword: "",
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isPasswordFormValid, setIsPasswordFormValid] = useState(false);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-
-  // Add state for the confirmation modal
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [currentUserPassword, setCurrentUserPassword] = useState("");
-
-  // UI state
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isFormValid, setIsFormValid] = useState(false);
-
-  // Lists for dropdowns
-  const [lineManagers, setLineManagers] = useState([]);
-  const [districtManagers, setDistrictManagers] = useState([]);
-  const [areaManagers, setAreaManagers] = useState([]);
-
-  // Governate options
-  const governates = [
-    { value: "Faiyum", label: "Faiyum" },
-    { value: "BaniSewif", label: "Bani Sewif" },
-    { value: "Minya", label: "Minya" },
-    { value: "Asyut", label: "Asyut" },
-    { value: "Sohag", label: "Sohag" },
-    { value: "Qena", label: "Qena" },
-    { value: "Luxor", label: "Luxor" },
-    { value: "Aswan", label: "Aswan" },
-  ];
-
-  // Define role hierarchy (higher index = higher permission)
-  const roleHierarchy = ["R", "DM", "Area", "LM", "HR", "GM"];
-
-  // Filter role options based on logged-in user's role
-  const getFilteredRoleOptions = () => {
-    const userRoleIndex = roleHierarchy.indexOf(user?.role);
-
-    // Define all possible role options
-    const allRoleOptions = [
-      { value: "R", label: "Representative" },
-      { value: "DM", label: "District Manager" },
-      { value: "Area", label: "Area Sales Manager" },
-      { value: "LM", label: "Line Manager" },
-      { value: "HR", label: "HR" },
-      { value: "GM", label: "General Manager" },
-    ];
-
-    // If user is GM or HR, show all roles
-    if (user?.role === "GM" || user?.role === "HR") {
-      return allRoleOptions;
-    }
-
-    // Otherwise, filter roles based on hierarchy
-    return allRoleOptions.filter((role) => {
-      const roleIndex = roleHierarchy.indexOf(role.value);
-      return roleIndex < userRoleIndex; // Only show roles with lower permission level
-    });
-  };
-
-  // Role options
-  const roleOptions = getFilteredRoleOptions();
-
-  // Fetch user data
-  useEffect(() => {
-    const fetchUserData = async () => {
+  React.useEffect(() => {
+    async function fetchUserData() {
+      setIsLoading(true);
       try {
-        setIsLoading(true);
         const response = await userService.getUserById(id);
         const userData = response.data;
-
         setFormData({
           name: userData.name || "",
           email: userData.email || "",
@@ -116,134 +120,214 @@ export default function UserEdit() {
           DM: userData.DM?._id || userData.DM || "",
           Area: userData.Area?._id || userData.Area || "",
         });
-      } catch (error) {
+      } catch {
         toast.error("Failed to fetch user data");
-        console.error(error);
       } finally {
         setIsLoading(false);
       }
-    };
-
-    if (id) {
-      fetchUserData();
     }
+    if (id) fetchUserData();
   }, [id]);
 
-  // Fetch line managers and district managers
-  useEffect(() => {
-    const fetchManagers = async () => {
+  React.useEffect(() => {
+    async function fetchManagers() {
       try {
-        // Fetch district managers
-        const dmResponse = await userService.getUsersByRole("DM");
-        setDistrictManagers(dmResponse.data || []);
-
-        // Fetch line managers
-        const lmResponse = await userService.getUsersByRole("LM");
-        setLineManagers(lmResponse.data || []);
-
-        // Fetch area managers
-        const areaResponse = await userService.getUsersByRole("Area");
-        setAreaManagers(areaResponse.data || []);
-      } catch (error) {
-        console.error("Error fetching managers:", error);
+        setDistrictManagers(
+          (await userService.getUsersByRole("DM")).data || []
+        );
+        setLineManagers((await userService.getUsersByRole("LM")).data || []);
+        setAreaManagers((await userService.getUsersByRole("Area")).data || []);
+      } catch {
+        // silent
       }
-    };
-
+    }
     fetchManagers();
   }, []);
 
-  // Form validation
-  useEffect(() => {
+  React.useEffect(() => {
     const { name, email, role } = formData;
-
-    // Basic validation
     const isValid = name.trim() !== "" && email.trim() !== "" && role !== "";
-
-    // Additional validation for specific roles
     if (
       role === "R" &&
       (!formData.LM || !formData.governate || !formData.Area || !formData.DM)
-    ) {
+    )
       setIsFormValid(false);
-    } else if (
+    else if (
       role === "DM" &&
       (!formData.LM || !formData.Area || !formData.governate)
-    ) {
+    )
       setIsFormValid(false);
-    } else if (role === "LM" && !formData.governate) {
-      setIsFormValid(false);
-    } else if (role === "Area" && !formData.LM) {
-      setIsFormValid(false);
-    } else {
-      setIsFormValid(isValid);
-    }
+    else if (role === "LM" && !formData.governate) setIsFormValid(false);
+    else if (role === "Area" && !formData.LM) setIsFormValid(false);
+    else setIsFormValid(isValid);
   }, [formData]);
 
-  // Simplify password validation to only require 8+ characters
-  useEffect(() => {
-    const { password, confirmPassword } = passwordData;
-
-    // Simplified password requirements - just 8+ characters
-    const hasMinLength = password.length >= 8;
-    const passwordsMatch = password === confirmPassword;
-
-    setIsPasswordFormValid(password !== "" && hasMinLength && passwordsMatch);
-  }, [passwordData]);
-
-  // Handle form field changes
-  const handleChange = (e) => {
+  function handleChange(e) {
     const { name, value } = e.target;
-
-    // Reset dependent fields when role changes
     if (name === "role") {
       const updatedData = { ...formData, [name]: value };
-
-      // Reset fields based on role
       if (value !== "R" && value !== "DM") {
         updatedData.LM = "";
         updatedData.Area = "";
       }
-
-      if (value !== "R") {
-        updatedData.DM = "";
-      }
-
-      // Reset governate for roles that don't need it
-      if (
-        value !== "R" &&
-        value !== "LM" &&
-        value !== "DM" &&
-        value !== "Area"
-      ) {
+      if (value !== "R") updatedData.DM = "";
+      if (!["R", "LM", "DM", "Area"].includes(value))
         updatedData.governate = "";
-      }
-
       setFormData(updatedData);
     } else {
       setFormData({ ...formData, [name]: value });
     }
-  };
+  }
 
-  // Handle password form field changes
-  const handlePasswordChange = (e) => {
-    const { name, value } = e.target;
-    setPasswordData({ ...passwordData, [name]: value });
+  function getFilteredRoleOptions() {
+    const userRoleIndex = ROLE_HIERARCHY.indexOf(user?.role);
+    if (user?.role === "GM" || user?.role === "HR") return ALL_ROLE_OPTIONS;
+    return ALL_ROLE_OPTIONS.filter(
+      (role) => ROLE_HIERARCHY.indexOf(role.value) < userRoleIndex
+    );
+  }
+
+  return {
+    formData,
+    setFormData,
+    lineManagers,
+    districtManagers,
+    areaManagers,
+    isLoading,
+    isSaving,
+    setIsSaving,
+    isFormValid,
+    handleChange,
+    getFilteredRoleOptions,
   };
+}
+
+/**
+ * Custom hook for password change logic
+ */
+function usePasswordChangeLogic() {
+  const [passwordData, setPasswordData] = React.useState({
+    password: "",
+    confirmPassword: "",
+  });
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+  const [isPasswordFormValid, setIsPasswordFormValid] = React.useState(false);
+  const [isChangingPassword, setIsChangingPassword] = React.useState(false);
+  const [showPasswordModal, setShowPasswordModal] = React.useState(false);
+  const [currentUserPassword, setCurrentUserPassword] = React.useState("");
+
+  React.useEffect(() => {
+    const { password, confirmPassword } = passwordData;
+    const hasMinLength = password.length >= 8;
+    const passwordsMatch = password === confirmPassword;
+    setIsPasswordFormValid(password !== "" && hasMinLength && passwordsMatch);
+  }, [passwordData]);
+
+  return {
+    passwordData,
+    setPasswordData,
+    showPassword,
+    setShowPassword,
+    showConfirmPassword,
+    setShowConfirmPassword,
+    isPasswordFormValid,
+    isChangingPassword,
+    setIsChangingPassword,
+    showPasswordModal,
+    setShowPasswordModal,
+    currentUserPassword,
+    setCurrentUserPassword,
+  };
+}
+
+// --- Modal Component ---
+function PasswordConfirmationModal({
+  show,
+  onCancel,
+  onConfirm,
+  currentUserPassword,
+  setCurrentUserPassword,
+  disabled,
+}) {
+  if (!show) return null;
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          Confirm Password Change
+        </h3>
+        <p className="text-sm text-gray-500 mb-4">
+          Please enter your current password to confirm this change.
+        </p>
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-medium mb-2">
+            Your Password
+          </label>
+          <input
+            type="password"
+            value={currentUserPassword}
+            onChange={(e) => setCurrentUserPassword(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your current password"
+          />
+        </div>
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={disabled}
+            className={`px-4 py-2 rounded-md text-white ${
+              disabled
+                ? "bg-blue-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
+          >
+            Confirm Change
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Main Component ---
+export default function UserEdit() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Form logic
+  const {
+    formData,
+    lineManagers,
+    districtManagers,
+    areaManagers,
+    isLoading,
+    isSaving,
+    setIsSaving,
+    isFormValid,
+    handleChange,
+    getFilteredRoleOptions,
+  } = useUserEditLogic(id, user);
+
+  // Password logic
+  const passwordLogic = usePasswordChangeLogic();
 
   // Handle form submission
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
-
     if (!isFormValid) return;
-
-    // Create user data object based on role
     const userData = {
       name: formData.name,
       email: formData.email,
       role: formData.role,
     };
-
-    // Add role-specific fields
     if (formData.role === "R") {
       userData.LM = formData.LM;
       userData.Area = formData.Area;
@@ -257,8 +341,8 @@ export default function UserEdit() {
       userData.governate = formData.governate;
     } else if (formData.role === "Area") {
       userData.LM = formData.LM;
+      userData.governate = formData.governate;
     }
-
     try {
       setIsSaving(true);
       await userService.updateUser(id, userData);
@@ -269,43 +353,36 @@ export default function UserEdit() {
     } finally {
       setIsSaving(false);
     }
-  };
+  }
 
   // Handle password form submission
-  const handlePasswordSubmit = async (e) => {
+  function handlePasswordSubmit(e) {
     e.preventDefault();
+    if (!passwordLogic.isPasswordFormValid) return;
+    passwordLogic.setShowPasswordModal(true);
+  }
 
-    if (!isPasswordFormValid) return;
-
-    // Show the confirmation modal instead of submitting directly
-    setShowPasswordModal(true);
-  };
-
-  // Add a new function to handle the actual password update
-  const confirmPasswordUpdate = async () => {
-    if (!isPasswordFormValid) return;
-
+  // Confirm password update
+  async function confirmPasswordUpdate() {
+    if (!passwordLogic.isPasswordFormValid) return;
     try {
-      setIsChangingPassword(true);
-
-      // Update to include the current user's password
+      passwordLogic.setIsChangingPassword(true);
       await userService.updateUserPassword(id, {
-        password: passwordData.password,
-        currentUserPassword: currentUserPassword,
+        password: passwordLogic.passwordData.password,
+        currentUserPassword: passwordLogic.currentUserPassword,
       });
-
       toast.success("Password updated successfully");
-      setPasswordData({ password: "", confirmPassword: "" });
-      setCurrentUserPassword("");
-      setShowPasswordModal(false);
+      passwordLogic.setPasswordData({ password: "", confirmPassword: "" });
+      passwordLogic.setCurrentUserPassword("");
+      passwordLogic.setShowPasswordModal(false);
     } catch (error) {
       toast.error(
         error.response?.data?.error.message || "Failed to update password"
       );
     } finally {
-      setIsChangingPassword(false);
+      passwordLogic.setIsChangingPassword(false);
     }
-  };
+  }
 
   if (isLoading) {
     return (
@@ -314,6 +391,8 @@ export default function UserEdit() {
       </div>
     );
   }
+
+  const roleOptions = getFilteredRoleOptions();
 
   return (
     <div className="min-h-screen w-full">
@@ -333,7 +412,6 @@ export default function UserEdit() {
             </p>
           </div>
         </div>
-
         <form onSubmit={handleSubmit} className="mt-6">
           <div className="space-y-12">
             {/* Basic Information Section */}
@@ -342,172 +420,100 @@ export default function UserEdit() {
                 Basic Information
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <label className="flex items-center text-gray-700 font-medium mb-2">
-                    <FiUser className="mr-2" />
-                    Full Name <span className="text-red-500 ml-1">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none transition-colors bg-gray-50"
-                    placeholder="Enter full name"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="flex items-center text-gray-700 font-medium mb-2">
-                    <FiMail className="mr-2" />
-                    Email Address <span className="text-red-500 ml-1">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none transition-colors bg-gray-50"
-                    placeholder="Enter email address"
-                    required
-                  />
-                </div>
+                <InputField
+                  label="Full Name"
+                  icon={FiUser}
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Enter full name"
+                  required
+                />
+                <InputField
+                  label="Email Address"
+                  icon={FiMail}
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Enter email address"
+                  required
+                />
               </div>
             </div>
-
             {/* Role & Location Section */}
             <div>
               <h2 className="text-xl font-semibold text-gray-700 mb-6">
                 Role & Location
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <label className="flex items-center text-gray-700 font-medium mb-2">
-                    <FiUsers className="mr-2" />
-                    User Role <span className="text-red-500 ml-1">*</span>
-                  </label>
-                  <select
-                    name="role"
-                    value={formData.role}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none transition-colors bg-gray-50 appearance-none"
-                    required
-                  >
-                    <option value="">Select role</option>
-                    {roleOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Conditional Fields Based on Role */}
+                <SelectField
+                  label="User Role"
+                  icon={FiUsers}
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
+                  options={roleOptions}
+                  required
+                />
                 {(formData.role === "R" ||
                   formData.role === "LM" ||
                   formData.role === "DM" ||
                   formData.role === "Area") && (
-                  <div>
-                    <label className="flex items-center text-gray-700 font-medium mb-2">
-                      <FiMap className="mr-2" />
-                      Governate <span className="text-red-500 ml-1">*</span>
-                    </label>
-                    <select
-                      name="governate"
-                      value={formData.governate}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none transition-colors bg-gray-50 appearance-none"
-                      required
-                    >
-                      <option value="">Select governate</option>
-                      {governates.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <SelectField
+                    label="Governate"
+                    icon={FiMap}
+                    name="governate"
+                    value={formData.governate}
+                    onChange={handleChange}
+                    options={GOVERNATES}
+                    required
+                  />
                 )}
               </div>
-
-              {/* Line Manager field */}
               {(formData.role === "R" ||
                 formData.role === "DM" ||
                 formData.role === "Area") && (
                 <div className="mt-8">
-                  <label className="flex items-center text-gray-700 font-medium mb-2">
-                    <FiUsers className="mr-2" />
-                    Line Manager <span className="text-red-500 ml-1">*</span>
-                  </label>
-                  <select
+                  <SelectField
+                    label="Line Manager"
+                    icon={FiUsers}
                     name="LM"
                     value={formData.LM}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none transition-colors bg-gray-50 appearance-none"
+                    options={lineManagers}
                     required
-                  >
-                    <option value="">Select line manager</option>
-                    {lineManagers.map((lm) => (
-                      <option key={lm._id} value={lm._id}>
-                        {lm.name}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
               )}
-
-              {/* Area Manager field */}
               {(formData.role === "R" || formData.role === "DM") && (
                 <div className="mt-8">
-                  <label className="flex items-center text-gray-700 font-medium mb-2">
-                    <FiUsers className="mr-2" />
-                    Area Manager <span className="text-red-500 ml-1">*</span>
-                  </label>
-                  <select
+                  <SelectField
+                    label="Area Manager"
+                    icon={FiUsers}
                     name="Area"
                     value={formData.Area}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none transition-colors bg-gray-50 appearance-none"
+                    options={areaManagers}
                     required
-                  >
-                    <option value="">Select area manager</option>
-                    {areaManagers.map((area) => (
-                      <option key={area._id} value={area._id}>
-                        {area.name}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
               )}
-
-              {/* District Manager field */}
               {formData.role === "R" && (
                 <div className="mt-8">
-                  <label className="flex items-center text-gray-700 font-medium mb-2">
-                    <FiUsers className="mr-2" />
-                    District Manager{" "}
-                    <span className="text-red-500 ml-1">*</span>
-                  </label>
-                  <select
+                  <SelectField
+                    label="District Manager"
+                    icon={FiUsers}
                     name="DM"
                     value={formData.DM}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none transition-colors bg-gray-50 appearance-none"
+                    options={districtManagers}
                     required
-                  >
-                    <option value="">Select district manager</option>
-                    {districtManagers.map((dm) => (
-                      <option key={dm._id} value={dm._id}>
-                        {dm.name}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
               )}
             </div>
           </div>
-
           <div className="mt-16 flex justify-end space-x-6">
             <button
               type="button"
@@ -555,7 +561,6 @@ export default function UserEdit() {
             </button>
           </div>
         </form>
-
         {/* Password Change Form */}
         <div className="mt-16 pt-12 border-t border-gray-200">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">
@@ -563,23 +568,26 @@ export default function UserEdit() {
           </h2>
           <p className="text-gray-500 mb-8">
             Update the user's password. The password must be at least 8
-            characters long and include uppercase, lowercase, numbers, and
-            special characters.
+            characters long.
           </p>
-
           <form onSubmit={handlePasswordSubmit} className="max-w-lg">
             <div className="space-y-6">
               <div>
                 <label className="flex items-center text-gray-700 font-medium mb-2">
-                  <FiLock className="mr-2" />
-                  New Password <span className="text-red-500 ml-1">*</span>
+                  <FiLock className="mr-2" /> New Password{" "}
+                  <span className="text-red-500 ml-1">*</span>
                 </label>
                 <div className="relative">
                   <input
-                    type={showPassword ? "text" : "password"}
+                    type={passwordLogic.showPassword ? "text" : "password"}
                     name="password"
-                    value={passwordData.password}
-                    onChange={handlePasswordChange}
+                    value={passwordLogic.passwordData.password}
+                    onChange={(e) =>
+                      passwordLogic.setPasswordData({
+                        ...passwordLogic.passwordData,
+                        password: e.target.value,
+                      })
+                    }
                     className="w-full px-4 py-3 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none transition-colors bg-gray-50 pr-10"
                     placeholder="Enter new password"
                     required
@@ -587,30 +595,30 @@ export default function UserEdit() {
                   <button
                     type="button"
                     className="absolute right-3 top-3 text-gray-500 hover:text-gray-700"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() =>
+                      passwordLogic.setShowPassword(!passwordLogic.showPassword)
+                    }
                     tabIndex="-1"
                   >
-                    {showPassword ? (
+                    {passwordLogic.showPassword ? (
                       <FiEyeOff size={20} />
                     ) : (
                       <FiEye size={20} />
                     )}
                   </button>
                 </div>
-
-                {/* Password strength indicators */}
-                {passwordData.password && (
+                {passwordLogic.passwordData.password && (
                   <div className="mt-2 grid grid-cols-1 gap-2 text-sm">
                     <div
                       className={`flex items-center ${
-                        passwordData.password.length >= 8
+                        passwordLogic.passwordData.password.length >= 8
                           ? "text-green-600"
                           : "text-gray-400"
                       }`}
                     >
                       <span
                         className={`mr-1 block w-2 h-2 rounded-full ${
-                          passwordData.password.length >= 8
+                          passwordLogic.passwordData.password.length >= 8
                             ? "bg-green-600"
                             : "bg-gray-400"
                         }`}
@@ -620,18 +628,24 @@ export default function UserEdit() {
                   </div>
                 )}
               </div>
-
               <div>
                 <label className="flex items-center text-gray-700 font-medium mb-2">
-                  <FiLock className="mr-2" />
-                  Confirm Password <span className="text-red-500 ml-1">*</span>
+                  <FiLock className="mr-2" /> Confirm Password{" "}
+                  <span className="text-red-500 ml-1">*</span>
                 </label>
                 <div className="relative">
                   <input
-                    type={showConfirmPassword ? "text" : "password"}
+                    type={
+                      passwordLogic.showConfirmPassword ? "text" : "password"
+                    }
                     name="confirmPassword"
-                    value={passwordData.confirmPassword}
-                    onChange={handlePasswordChange}
+                    value={passwordLogic.passwordData.confirmPassword}
+                    onChange={(e) =>
+                      passwordLogic.setPasswordData({
+                        ...passwordLogic.passwordData,
+                        confirmPassword: e.target.value,
+                      })
+                    }
                     className="w-full px-4 py-3 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none transition-colors bg-gray-50 pr-10"
                     placeholder="Confirm new password"
                     required
@@ -639,47 +653,54 @@ export default function UserEdit() {
                   <button
                     type="button"
                     className="absolute right-3 top-3 text-gray-500 hover:text-gray-700"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    onClick={() =>
+                      passwordLogic.setShowConfirmPassword(
+                        !passwordLogic.showConfirmPassword
+                      )
+                    }
                     tabIndex="-1"
                   >
-                    {showConfirmPassword ? (
+                    {passwordLogic.showConfirmPassword ? (
                       <FiEyeOff size={20} />
                     ) : (
                       <FiEye size={20} />
                     )}
                   </button>
                 </div>
-
-                {/* Password match indicator */}
-                {passwordData.password && passwordData.confirmPassword && (
-                  <div className="mt-2">
-                    {passwordData.password === passwordData.confirmPassword ? (
-                      <p className="text-green-600 text-sm flex items-center">
-                        <span className="mr-1 block w-2 h-2 rounded-full bg-green-600"></span>
-                        Passwords match
-                      </p>
-                    ) : (
-                      <p className="text-red-500 text-sm flex items-center">
-                        <span className="mr-1 block w-2 h-2 rounded-full bg-red-500"></span>
-                        Passwords do not match
-                      </p>
-                    )}
-                  </div>
-                )}
+                {passwordLogic.passwordData.password &&
+                  passwordLogic.passwordData.confirmPassword && (
+                    <div className="mt-2">
+                      {passwordLogic.passwordData.password ===
+                      passwordLogic.passwordData.confirmPassword ? (
+                        <p className="text-green-600 text-sm flex items-center">
+                          <span className="mr-1 block w-2 h-2 rounded-full bg-green-600"></span>
+                          Passwords match
+                        </p>
+                      ) : (
+                        <p className="text-red-500 text-sm flex items-center">
+                          <span className="mr-1 block w-2 h-2 rounded-full bg-red-500"></span>
+                          Passwords do not match
+                        </p>
+                      )}
+                    </div>
+                  )}
               </div>
             </div>
-
             <div className="mt-10">
               <button
                 type="submit"
-                disabled={!isPasswordFormValid || isChangingPassword}
+                disabled={
+                  !passwordLogic.isPasswordFormValid ||
+                  passwordLogic.isChangingPassword
+                }
                 className={`px-6 py-3 rounded-md text-white font-medium transition-colors ${
-                  isPasswordFormValid && !isChangingPassword
+                  passwordLogic.isPasswordFormValid &&
+                  !passwordLogic.isChangingPassword
                     ? "bg-blue-600 hover:bg-blue-700"
                     : "bg-blue-300 cursor-not-allowed"
                 }`}
               >
-                {isChangingPassword ? (
+                {passwordLogic.isChangingPassword ? (
                   <span className="flex items-center">
                     <svg
                       className="animate-spin -ml-1 mr-2 h-5 w-5 text-white"
@@ -710,53 +731,14 @@ export default function UserEdit() {
             </div>
           </form>
         </div>
-
-        {/* Password Confirmation Modal */}
-        {showPasswordModal && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                Confirm Password Change
-              </h3>
-              <p className="text-sm text-gray-500 mb-4">
-                Please enter your current password to confirm this change.
-              </p>
-
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-medium mb-2">
-                  Your Password
-                </label>
-                <input
-                  type="password"
-                  value={currentUserPassword}
-                  onChange={(e) => setCurrentUserPassword(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter your current password"
-                />
-              </div>
-
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => setShowPasswordModal(false)}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmPasswordUpdate}
-                  disabled={!currentUserPassword}
-                  className={`px-4 py-2 rounded-md text-white ${
-                    !currentUserPassword
-                      ? "bg-blue-400 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700"
-                  }`}
-                >
-                  Confirm Change
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <PasswordConfirmationModal
+          show={passwordLogic.showPasswordModal}
+          onCancel={() => passwordLogic.setShowPasswordModal(false)}
+          onConfirm={confirmPasswordUpdate}
+          currentUserPassword={passwordLogic.currentUserPassword}
+          setCurrentUserPassword={passwordLogic.setCurrentUserPassword}
+          disabled={!passwordLogic.currentUserPassword}
+        />
       </div>
     </div>
   );

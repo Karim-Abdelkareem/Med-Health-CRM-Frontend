@@ -106,10 +106,24 @@ export default function PlanModal({
   };
 
   const { user } = useAuth();
-  // Filter location options by user governate
-  const filteredLocationOptions = locationOptions.filter(
-    (loc) => loc.state === user?.governate
-  );
+  // Define groupings
+  const governateGroups = {
+    "Faiyum-BaniSewif-Minya-Assuit": ["Faiyum", "BaniSewif", "Minya", "Assuit"],
+    "Sohag-Qena-Luxor-Aswan": ["Sohag", "Qena", "Luxor", "Aswan"],
+    // Add more groups if needed
+  };
+
+  const userGovernate = user?.governate;
+
+  // If userGovernate is a group, show all locations in that group; else, match directly
+  const filteredLocationOptions =
+    userGovernate === "All"
+      ? locationOptions
+      : userGovernate && governateGroups[userGovernate]
+      ? locationOptions.filter((loc) =>
+          governateGroups[userGovernate].includes(loc.state)
+        )
+      : locationOptions.filter((loc) => loc.state === userGovernate);
 
   return (
     <div
