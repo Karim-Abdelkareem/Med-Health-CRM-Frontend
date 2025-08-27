@@ -23,24 +23,47 @@ export default function AuthLayout() {
   }
 
   return (
-    <>
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
-        <div className="mb-6">
-          <div className="relative">
+    <div className="min-h-screen flex flex-col">
+      {/* Header */}
+      <div className="relative flex justify-center items-center p-4 shadow-md">
+        <img
+          src="https://med-health.org/user/images/logo-main.png"
+          alt="Med-Health Logo"
+          className="invert"
+        />
+      </div>
+
+      {/* Main Content - Split Layout */}
+      <div className="flex-1 flex">
+        {/* Left Side - Login Form */}
+        <div className="w-1/2 flex items-center justify-center p-8">
+          <div className="w-full max-w-md">
+            <Outlet />
+          </div>
+        </div>
+
+        {/* Right Side - Logo */}
+        <div className="w-1/2 flex items-center justify-center bg-gray-50">
+          <div className="text-center justify-center items-center">
             <img
               src="https://med-health.org/user/images/logo-main.png"
               alt="Med-Health Logo"
-              className="invert"
+              className="w-full h-auto mb-8 invert"
             />
+            <h1 className="text-3xl font-bold text-gray-800 mb-4">
+              Welcome to Med-Health
+            </h1>
+            <p className="text-gray-600 text-lg">
+              Advanced Healthcare Customer Management System
+            </p>
           </div>
         </div>
-        <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow">
-          <Outlet />
-        </div>
       </div>
-      <div className="text-center text-gray-500 text-sm my-4">
+
+      {/* Footer */}
+      <div className="text-center text-gray-500 text-sm p-4">
         © {new Date().getFullYear()} Med-Health. All rights reserved.
       </div>
-    </>
+    </div>
   );
 }

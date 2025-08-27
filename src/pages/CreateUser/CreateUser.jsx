@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { createUser } from "../../store/User/UserSlice";
 import {
   FiUser,
   FiMail,
@@ -84,6 +82,7 @@ export default function CreateUser() {
     { value: "Minya", label: "Minya" },
     { value: "Asyut", label: "Asyut" },
     { value: "Sohag", label: "Sohag" },
+    { value: "Nag hammadi-Hurghada", label: "Nag hammadi - Hurghada" },
     { value: "Qena", label: "Qena" },
     { value: "Luxor", label: "Luxor" },
     { value: "Aswan", label: "Aswan" },
