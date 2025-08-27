@@ -36,14 +36,14 @@ export default function AuthLayout() {
       {/* Main Content - Split Layout */}
       <div className="flex-1 flex">
         {/* Left Side - Login Form */}
-        <div className="w-1/2 flex items-center justify-center p-8">
+        <div className="w-full md:w-1/2 flex items-center justify-center p-8">
           <div className="w-full max-w-md">
             <Outlet />
           </div>
         </div>
 
         {/* Right Side - Logo */}
-        <div className="w-1/2 flex items-center justify-center bg-gray-50">
+        <div className="w-1/2 hidden md:flex items-center justify-center bg-gray-50">
           <div className="text-center justify-center items-center">
             <img
               src="https://med-health.org/user/images/logo-main.png"
